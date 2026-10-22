@@ -1,0 +1,15 @@
+{
+  "environment": "development",
+  "log_level": "INFO",
+  "reports_dir": "reports",
+  "network": {
+    "enabled": false,
+    "timeout_seconds": 10,
+    "max_concurrency": 2,
+    "max_requests_per_run": 25
+  },
+  "authorization": {
+    "required_for_active_checks": true,
+    "targets_file": "config/authorized_targets.txt"
+  }
+}
