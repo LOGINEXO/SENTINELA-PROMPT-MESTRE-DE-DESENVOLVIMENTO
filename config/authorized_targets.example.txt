@@ -1,0 +1,5 @@
+# Example scope file only.
+# Add only assets for which you have documented authorization.
+# Prefer explicit hostnames and define permitted methods, dates, and owner
+# in your authorization record before enabling any future active checks.
+# This example file is not an authorization grant and is not loaded by the CLI.
