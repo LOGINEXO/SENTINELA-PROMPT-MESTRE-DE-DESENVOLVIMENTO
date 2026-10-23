@@ -15,6 +15,7 @@ dist/
 config/settings.json
 config/settings.local.json
 config/authorized_targets.txt
+config/authorized_active_targets.txt
 
 # Local data and reports
 reports/*
