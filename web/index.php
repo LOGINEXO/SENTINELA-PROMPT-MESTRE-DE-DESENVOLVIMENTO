@@ -54,7 +54,7 @@ function run_cli(array $arguments): array
     fclose($pipes[2]);
     $exitCode = proc_close($process);
 
-    if (strlen($stdout) > MAX_OUTPUT_BYTES || strlen($stderr) > MAX_OUTPUT_BYTES) {
+    if ($stdout === false || $stderr === false || strlen($stdout) > MAX_OUTPUT_BYTES || strlen($stderr) > MAX_OUTPUT_BYTES) {
         return [1, '', 'A saída ultrapassou o limite permitido e foi descartada.'];
     }
     return [$exitCode, $stdout === false ? '' : $stdout, $stderr === false ? '' : $stderr];
