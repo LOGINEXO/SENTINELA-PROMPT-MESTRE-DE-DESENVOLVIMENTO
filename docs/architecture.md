@@ -12,10 +12,10 @@ O Sentinela é um aplicativo open source local-first, não um serviço hospedado
 - Etapa 4 — Auditoria passiva HTTPS/TLS: concluída.
 - Etapa 5 — Escopo explícito e proteção de destinos: implementada.
 - Etapa 6 — Interface PHP: implementada.
-- Etapa 7 — Fila SQLite e controles cooperativos PLAY/PAUSE/STOP: implementada nesta branch, aguardando validação do CI.
-- Etapa 8 — Rascunhos de e-mail em Markdown para revisão manual, sem envio automático: implementada nesta branch, aguardando validação do CI.
-- Etapa 9 — Verificação ativa HTTPS limitada (um GET à raiz, escopo ativo separado e confirmação explícita): implementada nesta branch, aguardando CI.
-- Etapa 10: planejada, não implementada.
+- Etapa 7 — Fila SQLite e controles cooperativos PLAY/PAUSE/STOP: implementada.
+- Etapa 8 — Rascunhos de e-mail em Markdown para revisão manual, sem envio automático: implementada.
+- Etapa 9 — Verificação ativa HTTPS limitada (um GET à raiz, escopo ativo separado e confirmação explícita): implementada.
+- Etapa 10 — Revisão de segurança para distribuição open source local: implementada.\n- Etapa 11 — Scripts de instalação/inicialização para Linux e Windows e CI Python em Ubuntu/Windows com Python 3.11 e 3.12: em validação.
 
 ## Etapa 5 — Escopo e controles de destino
 
