@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Sentinela web interface (Stages 6–8).
+ * Sentinela web interface (Stages 6–9).
  * Configure the web server document root to this /web directory and keep the
  * repository root, local allowlist, environment files and reports outside it.
  */
@@ -79,6 +79,25 @@ function allowed_host(string $host): bool
     return false;
 }
 
+function allowed_active_host(string $host): bool
+{
+    $scopePath = APP_ROOT . '/config/authorized_active_targets.txt';
+    if (!is_file($scopePath) || !is_readable($scopePath)) {
+        return false;
+    }
+    $entries = file($scopePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($entries === false) {
+        return false;
+    }
+    foreach ($entries as $entry) {
+        $entry = strtolower(trim(explode('#', $entry, 2)[0]));
+        if ($entry !== '' && hash_equals($entry, strtolower($host))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 $result = null;
 $notice = '';
 $queueStatus = null;
@@ -122,6 +141,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Não foi possível enfileirar a auditoria. ' . trim($stderr);
                 } else {
                     $notice = 'Auditoria passiva adicionada à fila.';
+                }
+            }
+        } elseif ($action === 'active_audit') {
+            $host = strtolower(trim(is_string($_POST['host'] ?? null) ? $_POST['host'] : ''));
+            $confirmed = ($_POST['confirm_authorized'] ?? '') === 'yes';
+            if ($host === '' || strlen($host) > 253 || !preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/D', $host)) {
+                $error = 'Informe apenas um hostname DNS, sem URL, porta ou caminho.';
+            } elseif (!$confirmed) {
+                $error = 'Confirme a autorização documentada antes de solicitar o teste ativo.';
+            } elseif (!allowed_active_host($host)) {
+                $error = 'Hostname não consta na allowlist de autorização ativa. Nenhuma tarefa foi enfileirada.';
+            } else {
+                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.queue_cli', 'add-active-audit', '--host', $host, '--confirm-authorized']);
+                if ($code !== 0) {
+                    $error = 'Não foi possível enfileirar a verificação ativa. ' . trim($stderr);
+                } else {
+                    $notice = 'Verificação ativa limitada adicionada à fila.';
                 }
             }
         } elseif ($action === 'email_draft') {
@@ -221,6 +257,19 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <button type="submit">Executar auditoria passiva</button>
 </form>
 </section>
+
+<section class="panel">
+<h2>Verificação ativa autorizada</h2>
+<p>Executa exatamente um GET HTTPS para a raiz (/), na porta 443. Não segue redirecionamentos nem explora vulnerabilidades. Exige autorização documentada e hostname em <code>config/authorized_active_targets.txt</code>, separado da allowlist passiva.</p>
+<form method="post">
+<input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+<input type="hidden" name="action" value="active_audit">
+<label for="active-host">Hostname com autorização ativa</label>
+<input id="active-host" name="host" maxlength="253" required pattern="[A-Za-z0-9.-]+" placeholder="app.minha-empresa.example">
+<label><input type="checkbox" name="confirm_authorized" value="yes" required style="width:auto"> Confirmo que tenho autorização documentada para executar esta verificação ativa neste hostname.</label>
+<button type="submit">Enfileirar verificação ativa limitada</button>
+</form>
+</section>
 </div>
 
 <?php if ($result !== null): ?>
@@ -265,7 +314,7 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <td style="padding:8px;border-top:1px solid var(--line)"><?= e((string)$job['created_at']) ?></td>
 <td style="padding:8px;border-top:1px solid var(--line)">
 <?php if (!empty($job['error'])): ?><?= e((string)$job['error']) ?><?php elseif (isset($job['result'])): ?><details><summary>Ver resultado</summary><pre><?= e(json_encode($job['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '') ?></pre></details><?php else: ?>—<?php endif; ?>
-<?php if (($job['status'] ?? '') === 'completed' && in_array(($job['task_type'] ?? ''), ['nvd_search', 'passive_audit'], true)): ?>
+<?php if (($job['status'] ?? '') === 'completed' && in_array(($job['task_type'] ?? ''), ['nvd_search', 'passive_audit', 'active_audit'], true)): ?>
 <form method="post" style="min-width:180px">
 <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
 <input type="hidden" name="action" value="email_draft">

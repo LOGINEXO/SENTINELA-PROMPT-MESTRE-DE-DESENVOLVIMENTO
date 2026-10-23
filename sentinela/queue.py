@@ -10,7 +10,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB = ROOT / "reports" / "queue.sqlite3"
-VALID_TASKS = {"nvd_search", "passive_audit"}
+VALID_TASKS = {"nvd_search", "passive_audit", "active_audit"}
 VALID_MODES = {"running", "paused", "stopped"}
 
 
@@ -73,14 +73,26 @@ def _validate_payload(task_type: str, payload: dict[str, Any]) -> dict[str, Any]
     host = payload.get("host")
     if not isinstance(host, str) or not host.strip() or len(host) > 253:
         raise QueueError("A auditoria exige um hostname válido.")
-    # Validate syntax and exact allowlist at enqueue time; worker repeats this at execution time.
-    from sentinela.scope import canonical_hostname, load_scope, require_in_scope
-    canonical = canonical_hostname(host)
-    scope_path = Path(os.environ.get("SENTINELA_SCOPE_FILE", ROOT / "config" / "authorized_targets.txt"))
-    if not scope_path.is_absolute():
-        scope_path = ROOT / scope_path
-    allowed = load_scope(scope_path)
-    require_in_scope(canonical, allowed)
+    from sentinela.scope import ScopeError, canonical_hostname, load_scope, require_in_scope
+    try:
+        canonical = canonical_hostname(host)
+        if task_type == "passive_audit":
+            scope_env = "SENTINELA_SCOPE_FILE"
+            default_scope = ROOT / "config" / "authorized_targets.txt"
+        else:
+            if payload.get("confirm_authorized") is not True:
+                raise QueueError("A tarefa ativa exige --confirm-authorized e autorização documentada.")
+            scope_env = "SENTINELA_ACTIVE_SCOPE_FILE"
+            default_scope = ROOT / "config" / "authorized_active_targets.txt"
+        scope_path = Path(os.environ.get(scope_env, default_scope))
+        if not scope_path.is_absolute():
+            scope_path = ROOT / scope_path
+        allowed = load_scope(scope_path)
+        require_in_scope(canonical, allowed)
+    except ScopeError as exc:
+        raise QueueError(str(exc)) from exc
+    if task_type == "active_audit":
+        return {"host": canonical, "confirm_authorized": True}
     return {"host": canonical}
 
 

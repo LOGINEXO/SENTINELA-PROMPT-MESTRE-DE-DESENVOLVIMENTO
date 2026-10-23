@@ -16,6 +16,10 @@ def main(argv: list[str] | None = None) -> int:
     nvd.add_argument("--limit", type=int, default=10)
     audit = sub.add_parser("add-audit", help="adiciona auditoria passiva autorizada à fila")
     audit.add_argument("--host", required=True)
+    active = sub.add_parser("add-active-audit", help="adiciona verificação ativa HTTPS limitada; requer escopo separado")
+    active.add_argument("--host", required=True)
+    active.add_argument("--confirm-authorized", action="store_true",
+                        help="confirma que existe autorização documentada para este teste")
     control = sub.add_parser("control", help="controla a fila")
     control.add_argument("mode", choices=("play", "pause", "stop"))
     show = sub.add_parser("status", help="exibe status e histórico")
@@ -26,6 +30,10 @@ def main(argv: list[str] | None = None) -> int:
             output = enqueue("nvd_search", {"query": args.query, "limit": args.limit})
         elif args.command == "add-audit":
             output = enqueue("passive_audit", {"host": args.host})
+        elif args.command == "add-active-audit":
+            if not args.confirm_authorized:
+                raise QueueError("Use --confirm-authorized somente após confirmar autorização documentada.")
+            output = enqueue("active_audit", {"host": args.host, "confirm_authorized": True})
         elif args.command == "control":
             output = set_mode(args.mode)
         else:

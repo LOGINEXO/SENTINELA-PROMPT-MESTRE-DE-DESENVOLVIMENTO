@@ -86,6 +86,11 @@ def render_email_draft(job: dict[str, Any]) -> str:
         subject = f"Revisão necessária: resultado de auditoria passiva HTTPS — {host}"
         context = f"Foi concluída uma auditoria passiva HTTPS para o hostname autorizado {host}."
         caveat = "Este resultado é uma observação passiva e limitada; não representa teste de exploração nem certificação completa de segurança."
+    elif task_type == "active_audit":
+        host = _plain(job.get("payload", {}).get("host", ""), limit=253)
+        subject = f"Revisão necessária: verificação ativa HTTPS limitada — {host}"
+        context = f"Foi concluída uma verificação ativa limitada (uma única requisição GET à raiz) para o hostname autorizado {host}."
+        caveat = "Este teste limitado não representa teste de exploração, varredura de portas, teste de penetração ou certificação completa de segurança."
     else:
         raise EmailDraftError("Tipo de tarefa não suportado para rascunho.")
     generated = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")

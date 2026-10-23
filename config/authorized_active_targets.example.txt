@@ -1,0 +1,4 @@
+# Scope for the single-request active HTTPS check only.
+# This file grants no authorization. Copy to authorized_active_targets.txt
+# only after documented approval by the asset owner.
+# Add exact DNS hostnames, one per line; no wildcards.

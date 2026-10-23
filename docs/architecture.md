@@ -10,7 +10,8 @@
 - Etapa 6 — Interface PHP: implementada.
 - Etapa 7 — Fila SQLite e controles cooperativos PLAY/PAUSE/STOP: implementada nesta branch, aguardando validação do CI.
 - Etapa 8 — Rascunhos de e-mail em Markdown para revisão manual, sem envio automático: implementada nesta branch, aguardando validação do CI.
-- Etapas 9–10: planejadas, não implementadas.
+- Etapa 9 — Verificação ativa HTTPS limitada (um GET à raiz, escopo ativo separado e confirmação explícita): implementada nesta branch, aguardando CI.
+- Etapa 10: planejada, não implementada.
 
 ## Etapa 5 — Escopo e controles de destino
 
@@ -47,3 +48,8 @@ A interface pública está em `web/`. Ela chama a CLI Python com argumentos sepa
 ## Etapa 7 — Fila persistente
 
 A fila usa SQLite em `reports/queue.sqlite3` por padrão e aceita apenas consultas públicas NVD e auditorias passivas limitadas à allowlist exata. A interface PHP apenas enfileira tarefas e altera o estado global; `sentinela.queue_worker` é um processo separado e persistente que retira tarefas uma por vez. PLAY libera a fila, PAUSE impede o início de novas tarefas e STOP cancela tarefas pendentes e impede novas retiradas até PLAY. A tarefa de rede já em andamento não é interrompida instantaneamente; ela termina sob os timeouts existentes e fica marcada como parada se o modo continuar STOP. Consulte `docs/queue-controls.md`.
+
+
+## Etapa 9 — Verificação ativa limitada
+
+A verificação ativa faz uma única requisição GET para `/` em HTTPS/443. Ela exige a allowlist local independente `config/authorized_active_targets.txt` e confirmação explícita na criação da tarefa. O worker relê essa allowlist no momento da execução. O destino é resolvido e validado como IP público e a conexão é fixada nesse IP, com verificação TLS normal. Redirecionamentos não são seguidos e o corpo da resposta não é persistido (a leitura é limitada a 8192 bytes). Não há exploração, varredura de portas ou enumeração de diretórios. Consulte `docs/active-audit.md`.
