@@ -1,6 +1,6 @@
 # Sentinela
 
-Plataforma modular de inteligência e auditoria de segurança defensiva. O projeto está na **Etapa 1 — Fundação**. Nesta etapa, o CLI valida configurações locais; ainda não há coleta de inteligência, scanners, interface web ou execução automática.
+Plataforma modular de inteligência pública e auditoria defensiva de segurança. A **Etapa 1 — Fundação** foi validada no GitHub Actions; a **Etapa 2 — Inteligência pública** implementa consultas explícitas à API NVD/CVE 2.0. Não há scanner de ativos nesta etapa.
 
 ## Requisitos
 
@@ -8,7 +8,7 @@ Plataforma modular de inteligência e auditoria de segurança defensiva. O proje
 - Git
 - pip
 
-O código de execução da fundação usa apenas a biblioteca padrão do Python. pytest é usado nos testes. Nenhuma requisição de rede é feita.
+O motor usa a biblioteca padrão do Python. pytest é usado nos testes. A rede só é acessada quando uma consulta NVD é solicitada explicitamente pela CLI.
 
 ## Instalação
 
@@ -26,13 +26,11 @@ Windows PowerShell:
 
 ~~~powershell
 py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\\.venv\\Scripts\\Activate.ps1
 python -m pip install -r requirements.txt
 ~~~
 
-## Verificação
-
-Na raiz do repositório:
+## Verificação local
 
 ~~~bash
 python -m sentinela.cli --help
@@ -41,27 +39,38 @@ python -m sentinela.cli --check-config
 python -m pytest -q
 ~~~
 
-Para validar outro arquivo JSON:
+## Consultar inteligência pública NVD/CVE
+
+Busca por palavra-chave (consulta a API oficial; exige conectividade com a internet):
 
 ~~~bash
-python -m sentinela.cli --check-config caminho/para/settings.json
+python -m sentinela.cli --nvd-search "OpenSSH" --limit 10
 ~~~
 
-A validação é local. Ela não inicia scanners, não acessa hosts e não cria arquivos de relatório.
+Consultar um CVE específico:
 
-## Estrutura atual
+~~~bash
+python -m sentinela.cli --nvd-cve CVE-2024-3094
+~~~
 
-- **sentinela/**: pacote Python e CLI da fundação.
-- **config/**: exemplos de configuração e de escopo autorizado.
-- **tests/**: testes automatizados da fundação e da validação de configuração.
+Opcionalmente, defina NVD_API_KEY no ambiente para autenticar as consultas e receber a cota aplicável à chave. Não coloque a chave em arquivos versionados. Sem chave, a NVD pode aplicar limites mais restritos. O cliente usa timeout, limita a consulta a 100 resultados, informa erros de rede/limite e não repete requisições automaticamente.
+
+Os resultados normalizados incluem CVE, descrição, datas, estado, CVSS quando disponível, produtos/intervalos afetados indicados pela NVD e referências. Um indicador público **não comprova** que um site específico seja vulnerável: asset_confirmed permanece false e validation_status é new_public_indicator.
+
+## Estrutura
+
+- **sentinela/**: pacote Python e CLI.
+- **sentinela/intelligence/nvd.py**: cliente e normalizador da API NVD 2.0.
+- **config/**: exemplos de configuração e escopo autorizado.
+- **tests/**: testes automatizados, incluindo respostas NVD simuladas sem chamadas externas.
 - **docs/**: arquitetura, instalação e políticas de segurança.
-- **reports/**: diretório reservado para relatórios locais; conteúdo gerado é ignorado pelo Git.
-- **.github/workflows/tests.yml**: execução automatizada dos testes no GitHub Actions.
+- **reports/**: diretório reservado para relatórios locais.
+- **.github/workflows/tests.yml**: testes automatizados no GitHub Actions.
 
 ## Etapas do projeto
 
-- [ ] Etapa 1 — Fundação: estrutura, configuração, ambiente, documentação e testes básicos; aguardando validação final no CI.
-- [ ] Etapa 2 — Inteligência pública (NVD/CVE).
+- [x] Etapa 1 — Fundação: estrutura, configuração, documentação, testes básicos e CI validado.
+- [ ] Etapa 2 — Inteligência pública: cliente NVD/CVE, normalização, erros e testes simulados; aguardando validação do CI desta versão.
 - [ ] Etapa 3 — Relatórios locais.
 - [ ] Etapa 4 — Auditoria passiva.
 - [ ] Etapa 5 — Controle de escopo e mitigação de SSRF/DNS rebinding.
@@ -71,26 +80,22 @@ A validação é local. Ela não inicia scanners, não acessa hosts e não cria 
 - [ ] Etapa 9 — Testes ativos autorizados.
 - [ ] Etapa 10 — Revisão e publicação.
 
-Cada etapa será implementada e validada separadamente. A conclusão da Etapa 1 não significa que os módulos das etapas seguintes já existam.
+Cada etapa será implementada e validada separadamente. Não há consulta automática contínua, exploração de alvos, auditoria de sites nem envio de e-mails nesta etapa.
 
 ## Princípios de segurança
 
 - Inteligência pública não concede autorização para testar um ativo.
-- Testes ativos futuros devem exigir escopo e autorização explícitos.
+- Testes ativos futuros exigirão escopo e autorização explícitos.
 - Não armazene segredos, tokens, cookies de sessão ou respostas completas potencialmente sensíveis.
-- Mantenha configurações locais e relatórios fora da raiz pública de qualquer servidor.
+- Mantenha configurações privadas e relatórios fora da raiz pública de qualquer servidor.
 - Não execute verificações contra sistemas de terceiros sem autorização válida.
-- A configuração de exemplo mantém rede desabilitada e exige autorização para futuras verificações ativas.
+- Arquivos de exemplo são modelos e não concedem autorização.
 
 Consulte docs/architecture.md, docs/installation.md, docs/security.md e docs/responsible-disclosure.md.
 
 ## Configuração
 
-.env.example e config/settings.example.json contêm apenas valores de exemplo. Não coloque credenciais reais no Git. O arquivo config/authorized_targets.example.txt é apenas um modelo e não concede autorização.
-
-## Contribuição
-
-Antes de propor novos módulos, leia a arquitetura e a política de segurança. Não declare funcionalidades concluídas sem testes reais e resultados verificáveis.
+.env.example e config/settings.example.json contêm somente valores de exemplo. A variável opcional NVD_API_KEY deve ser definida fora do repositório.
 
 ## Licença
 
