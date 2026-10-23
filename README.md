@@ -100,6 +100,10 @@ A auditoria envia uma requisição `HEAD` por HTTPS na porta 443, verifica o cer
 
 Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit.md](docs/passive-audit.md).
 
+## Rastreamento automático limitado de sites autorizados
+
+O recurso de rastreamento percorre até 25 páginas HTML do hostname exato cadastrado em `config/authorized_targets.txt`. Faz apenas requisições GET HTTPS de leitura na porta 443, limita o tamanho de cada resposta, não envia formulários, não executa JavaScript, não segue redirecionamentos e ignora links externos. Registra status HTTP, título, cabeçalhos de segurança ausentes e cabeçalhos que podem indicar tecnologia. Esses dados são pistas para revisão, não confirmação automática de vulnerabilidade. Pela CLI, use `python -m sentinela.queue_cli add-crawl --host meu-dominio.example --max-pages 10`; pela interface, use “Rastreamento automático do site”.
+
 ## Etapa 6 — Interface PHP
 
 A interface web fica em `web/index.php` e é **local-only**: não existe login, cadastro, hospedagem central nem armazenamento remoto de relatórios. Use `bash scripts/install-linux.sh` e `bash scripts/start-linux.sh` no Linux ou `.\scripts\install-windows.ps1` e `.\scripts\start-windows.ps1` no Windows. Abra `http://127.0.0.1:8080`. Os inicializadores definem `SENTINELA_PYTHON` para o ambiente virtual e iniciam o worker da fila. O servidor fica ligado somente a `127.0.0.1`. Cada instalação mantém seu próprio banco SQLite, histórico, relatórios e rascunhos em `reports/` no computador do usuário. Não publique o painel na internet, não use proxy/túnel e não altere o bind para `0.0.0.0`.
@@ -127,7 +131,7 @@ Os arquivos são gravados em `reports/` no computador onde o comando é executad
 - [x] 8 — Rascunhos de e-mail e revisão manual.
 - [x] 9 — Verificação ativa HTTPS limitada, com escopo de autorização separado.
 - [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço). 
-- [x] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas.
+- [x] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas.\n- [ ] 12 — Rastreamento limitado de páginas HTTPS em hostnames autorizados; validação e testes em andamento.
 
 Inteligência pública não concede autorização para testar ativos. A verificação ativa implementada faz somente um GET HTTPS à raiz de hostname em allowlist ativa separada, sem seguir redirecionamentos; não há exploração nem varredura de portas. Não há envio automático de e-mails.
 

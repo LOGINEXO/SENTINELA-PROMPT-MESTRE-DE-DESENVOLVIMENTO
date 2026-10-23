@@ -153,6 +153,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $notice = 'Auditoria passiva adicionada à fila.';
                 }
             }
+        } elseif ($action === 'crawl') {
+            $host = strtolower(trim(is_string($_POST['host'] ?? null) ? $_POST['host'] : ''));
+            $maxPages = is_string($_POST['max_pages'] ?? null) ? $_POST['max_pages'] : '10';
+            if ($host === '' || strlen($host) > 253 || !preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/D', $host)) {
+                $error = 'Informe apenas um hostname DNS, sem URL, porta ou caminho.';
+            } elseif (!allowed_host($host)) {
+                $error = 'Hostname não consta na allowlist local. Nenhum rastreamento foi enfileirado.';
+            } elseif (!ctype_digit($maxPages) || (int)$maxPages < 1 || (int)$maxPages > 25) {
+                $error = 'O rastreamento deve ficar entre 1 e 25 páginas.';
+            } else {
+                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.queue_cli', 'add-crawl', '--host', $host, '--max-pages', (string)(int)$maxPages]);
+                if ($code !== 0) {
+                    $error = 'Não foi possível enfileirar o rastreamento. ' . trim($stderr);
+                } else {
+                    $notice = 'Rastreamento de páginas autorizado adicionado à fila.';
+                }
+            }
         } elseif ($action === 'active_audit') {
             $host = strtolower(trim(is_string($_POST['host'] ?? null) ? $_POST['host'] : ''));
             $confirmed = ($_POST['confirm_authorized'] ?? '') === 'yes';
@@ -269,6 +286,24 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 </section>
 
 <section class="panel">
+<h2>Rastreamento automático do site</h2>
+<p>Visita páginas HTML do hostname autorizado, identifica links internos, cabeçalhos de segurança e indicadores de tecnologia. Limite de 1 a 25 páginas. Não envia formulários, não executa JavaScript, não segue redirecionamentos e ignora links externos. Exige hostname em <code>config/authorized_targets.txt</code>.</p>
+<form method="post">
+<input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+<input type="hidden" name="action" value="crawl">
+<label for="crawl-host">Hostname autorizado</label>
+<input id="crawl-host" name="host" maxlength="253" required pattern="[A-Za-z0-9.-]+" placeholder="app.minha-empresa.com">
+<label for="max-pages">Máximo de páginas</label>
+<select id="max-pages" name="max_pages">
+<?php foreach ([5,10,15,25] as $option): ?>
+<option value="<?= $option ?>" <?= $option === 10 ? 'selected' : '' ?>><?= $option ?></option>
+<?php endforeach; ?>
+</select>
+<button type="submit">Rastrear e examinar páginas</button>
+</form>
+</section>
+
+<section class="panel">
 <h2>Verificação ativa autorizada</h2>
 <p>Executa exatamente um GET HTTPS para a raiz (/), na porta 443. Não segue redirecionamentos nem explora vulnerabilidades. Exige autorização documentada e hostname em <code>config/authorized_active_targets.txt</code>, separado da allowlist passiva.</p>
 <form method="post">
@@ -324,7 +359,7 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <td style="padding:8px;border-top:1px solid var(--line)"><?= e((string)$job['created_at']) ?></td>
 <td style="padding:8px;border-top:1px solid var(--line)">
 <?php if (!empty($job['error'])): ?><?= e((string)$job['error']) ?><?php elseif (isset($job['result'])): ?><details><summary>Ver resultado</summary><pre><?= e(json_encode($job['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '') ?></pre></details><?php else: ?>—<?php endif; ?>
-<?php if (($job['status'] ?? '') === 'completed' && in_array(($job['task_type'] ?? ''), ['nvd_search', 'passive_audit', 'active_audit'], true)): ?>
+<?php if (($job['status'] ?? '') === 'completed' && in_array(($job['task_type'] ?? ''), ['nvd_search', 'passive_audit', 'active_audit', 'site_crawl'], true)): ?>
 <form method="post" style="min-width:180px">
 <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
 <input type="hidden" name="action" value="email_draft">

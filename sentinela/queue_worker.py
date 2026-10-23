@@ -12,6 +12,7 @@ from sentinela.reports import build_report
 from sentinela.scope import load_scope
 from sentinela.audit.passive import audit_https
 from sentinela.audit.active import audit_https_get
+from sentinela.audit.crawler import crawl_authorized_site
 
 
 def execute(job: dict) -> dict:
@@ -26,6 +27,13 @@ def execute(job: dict) -> dict:
         allowed_hosts = load_scope(scope_path)
         result = audit_https(payload["host"], allowed_hosts=allowed_hosts)
         return build_report([result], source="passive-https-audit")
+    if job["task_type"] == "site_crawl":
+        scope_path = Path(__import__("os").environ.get("SENTINELA_SCOPE_FILE", ROOT / "config" / "authorized_targets.txt"))
+        if not scope_path.is_absolute():
+            scope_path = ROOT / scope_path
+        allowed_hosts = load_scope(scope_path)
+        result = crawl_authorized_site(payload["host"], allowed_hosts=allowed_hosts, max_pages=payload["max_pages"])
+        return build_report(result.get("pages", []), source="authorized-site-crawl") | {"crawl": result}
     if job["task_type"] == "active_audit":
         if payload.get("confirm_authorized") is not True:
             raise ValueError("Confirmação explícita de autorização ausente.")
