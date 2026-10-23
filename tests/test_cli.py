@@ -71,8 +71,7 @@ def test_incremental_options_require_search_mode():
     assert exc.value.code == 2
 
 
-def test_modified_until_without_since_is_rejected_by_cli(monkeypatch):
-    monkeypatch.setattr("sentinela.cli.search_cves", lambda *_args, **_kwargs: [])
+def test_modified_until_without_since_is_rejected_by_cli():
     with pytest.raises(SystemExit) as exc:
         main(["--nvd-search", "OpenSSH", "--modified-until", "2026-10-02T00:00:00Z"])
     assert exc.value.code == 2
