@@ -50,13 +50,13 @@ if (-not $PythonExe -and (Has-Command "python")) {
 if (-not $PythonExe) {
     throw "Python nao foi encontrado apos a instalacao. Reinicie o Windows e use o atalho 'Instalar / reparar dependencias'."
 }
-& $PythonExe -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)"
+& $PythonExe -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)'
 if ($LASTEXITCODE -ne 0) { throw "O Sentinela exige Python 3.11 ou superior." }
 
 if (-not (Has-Command "php")) {
     throw "PHP CLI nao foi encontrado no PATH. Reinicie o Windows e execute 'Instalar / reparar dependencias' novamente."
 }
-php -r "exit(version_compare(PHP_VERSION, '8.0.0', '>=') ? 0 : 1);"
+php -r 'exit(version_compare(PHP_VERSION, "8.0.0", ">=") ? 0 : 1);'
 if ($LASTEXITCODE -ne 0) { throw "O Sentinela exige PHP CLI 8.0 ou superior." }
 
 if (Test-Path $ProjectDir) {
