@@ -1,0 +1,6 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<FilesMatch "^\.(?!well-known/)">
+    Require all denied
+</FilesMatch>
