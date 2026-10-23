@@ -1,6 +1,6 @@
 # Sentinela
 
-Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–8: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo, interface PHP, fila persistente e rascunhos de e-mail.
+Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–9: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo, interface PHP, fila persistente, rascunhos de e-mail e verificação ativa HTTPS limitada.
 
 ## Requisitos
 
@@ -94,7 +94,7 @@ Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit
 
 A interface web fica em `web/index.php`. Configure o document root do servidor web **somente** para `web/`; mantenha o repositório, o escopo real e os relatórios fora da raiz pública. Requer PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Para desenvolvimento local, execute na raiz do projeto `php -S 127.0.0.1:8080 -t web` e abra `http://127.0.0.1:8080`. Configure `SENTINELA_PYTHON` se o processo PHP não localizar o interpretador correto.
 
-A interface enfileira consultas NVD e auditorias passivas autorizadas, exibe histórico e controles PLAY/PAUSE/STOP e permite gerar rascunhos de e-mail para revisão manual. Consulte [docs/php-interface.md](docs/php-interface.md), [docs/queue-controls.md](docs/queue-controls.md) e [docs/email-drafts.md](docs/email-drafts.md).
+A interface enfileira consultas NVD, auditorias passivas e verificações ativas HTTPS limitadas com autorização separada, exibe histórico e controles PLAY/PAUSE/STOP e permite gerar rascunhos de e-mail. Consulte [docs/php-interface.md](docs/php-interface.md), [docs/queue-controls.md](docs/queue-controls.md), [docs/email-drafts.md](docs/email-drafts.md) e [docs/active-audit.md](docs/active-audit.md).
 
 ## Relatórios JSON
 
@@ -115,20 +115,21 @@ Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A san
 - [x] 6 — Interface PHP (síncrona; sem fila).
 - [x] 7 — Fila persistente e controles PLAY/PAUSE/STOP.
 - [x] 8 — Rascunhos de e-mail e revisão manual.
-- [ ] 9 — Testes ativos autorizados.
+- [x] 9 — Verificação ativa HTTPS limitada, com escopo de autorização separado.
 - [ ] 10 — Revisão e publicação.
 
-Inteligência pública não concede autorização para testar ativos. Etapas futuras de auditoria ativa exigirão escopo e autorização explícitos. Não há exploração, varredura de portas nem envio automático de e-mails. Os rascunhos são arquivos Markdown locais e exigem revisão humana.
+Inteligência pública não concede autorização para testar ativos. A verificação ativa implementada faz somente um GET HTTPS à raiz de hostname em allowlist ativa separada, sem seguir redirecionamentos; não há exploração nem varredura de portas. Não há envio automático de e-mails.
 
 ## Estrutura e políticas
 
 - `sentinela/intelligence/nvd.py`: cliente NVD/CVE.
-- `sentinela/audit/`: auditoria HTTPS passiva.
+- `sentinela/audit/passive.py`: auditoria HTTPS passiva.
+- `sentinela/audit/active.py`: verificação ativa limitada (um GET HTTPS), apenas com escopo ativo separado.
 - `sentinela/scope.py`: allowlist, resolução DNS e validação de destinos de redirecionamento.
 - `sentinela/reports.py`: formato, sanitização e exportação JSON.
 - `sentinela/queue.py`, `sentinela/queue_worker.py`, `sentinela/queue_cli.py`: fila SQLite, worker e controles.
 - `sentinela/email_drafts.py`: geração de rascunhos de e-mail não enviados para revisão manual.
-- `config/`: configurações e exemplos de escopo.
+- `config/`: configurações e exemplos de escopo passivo e ativo.
 - `tests/`: testes automatizados offline.
 - `reports/`: relatórios locais ignorados pelo Git.
 
