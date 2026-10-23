@@ -127,7 +127,7 @@ Os arquivos são gravados em `reports/` no computador onde o comando é executad
 - [x] 8 — Rascunhos de e-mail e revisão manual.
 - [x] 9 — Verificação ativa HTTPS limitada, com escopo de autorização separado.
 - [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço). 
-- [ ] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas (em validação).
+- [x] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas.
 
 Inteligência pública não concede autorização para testar ativos. A verificação ativa implementada faz somente um GET HTTPS à raiz de hostname em allowlist ativa separada, sem seguir redirecionamentos; não há exploração nem varredura de portas. Não há envio automático de e-mails.
 
