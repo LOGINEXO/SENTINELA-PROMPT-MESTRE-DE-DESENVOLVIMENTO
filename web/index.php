@@ -134,8 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Ação inválida.';
         }
-
-        }
     }
 }
 [$queueCode, $queueStdout, $queueStderr] = run_cli(['-m', 'sentinela.queue_cli', 'status', '--limit', '50']);
