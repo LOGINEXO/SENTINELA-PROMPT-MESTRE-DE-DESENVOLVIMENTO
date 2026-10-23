@@ -10,7 +10,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB = ROOT / "reports" / "queue.sqlite3"
-VALID_TASKS = {"nvd_search", "passive_audit", "active_audit"}
+VALID_TASKS = {"nvd_search", "passive_audit", "active_audit", "site_crawl"}
 VALID_MODES = {"running", "paused", "stopped"}
 
 
@@ -73,10 +73,14 @@ def _validate_payload(task_type: str, payload: dict[str, Any]) -> dict[str, Any]
     host = payload.get("host")
     if not isinstance(host, str) or not host.strip() or len(host) > 253:
         raise QueueError("A auditoria exige um hostname válido.")
+    if task_type == "site_crawl":
+        max_pages = payload.get("max_pages", 10)
+        if isinstance(max_pages, bool) or not isinstance(max_pages, int) or not 1 <= max_pages <= 25:
+            raise QueueError("O rastreamento deve limitar-se a 1–25 páginas.")
     from sentinela.scope import ScopeError, canonical_hostname, load_scope, require_in_scope
     try:
         canonical = canonical_hostname(host)
-        if task_type == "passive_audit":
+        if task_type in ("passive_audit", "site_crawl"):
             scope_env = "SENTINELA_SCOPE_FILE"
             default_scope = ROOT / "config" / "authorized_targets.txt"
         else:
@@ -93,6 +97,8 @@ def _validate_payload(task_type: str, payload: dict[str, Any]) -> dict[str, Any]
         raise QueueError(str(exc)) from exc
     if task_type == "active_audit":
         return {"host": canonical, "confirm_authorized": True}
+    if task_type == "site_crawl":
+        return {"host": canonical, "max_pages": max_pages}
     return {"host": canonical}
 
 
