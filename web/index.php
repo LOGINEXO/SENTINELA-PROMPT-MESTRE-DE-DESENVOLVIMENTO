@@ -18,6 +18,32 @@ header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
 
+// Fail closed: the control panel can enqueue jobs and control the worker.
+$webUsername = getenv('SENTINELA_WEB_USERNAME');
+$webPassword = getenv('SENTINELA_WEB_PASSWORD');
+if (
+    $webUsername === false || $webUsername === '' ||
+    $webPassword === false || strlen($webPassword) < 16
+) {
+    http_response_code(503);
+    echo 'Painel indisponível: configure SENTINELA_WEB_USERNAME e SENTINELA_WEB_PASSWORD (mínimo de 16 caracteres).';
+    exit;
+}
+
+$providedUsername = $_SERVER['PHP_AUTH_USER'] ?? null;
+$providedPassword = $_SERVER['PHP_AUTH_PW'] ?? null;
+if (
+    !is_string($providedUsername) ||
+    !is_string($providedPassword) ||
+    !hash_equals($webUsername, $providedUsername) ||
+    !hash_equals($webPassword, $providedPassword)
+) {
+    header('WWW-Authenticate: Basic realm="Sentinela", charset="UTF-8"');
+    http_response_code(401);
+    echo 'Autenticação necessária.';
+    exit;
+}
+
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
