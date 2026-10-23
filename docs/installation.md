@@ -2,32 +2,42 @@
 
 ## Requisitos
 
-Python 3.11+ e pip.
+- Python 3.11 ou superior
+- pip
 
 ## Ambiente virtual
 
 Linux/macOS:
 
-```bash
+~~~bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-```
+~~~
 
 Windows PowerShell:
 
-```powershell
+~~~powershell
 py -3 -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-```
+~~~
 
 ## Validar a fundação
 
-```bash
+Execute na raiz do repositório:
+
+~~~bash
 python -m sentinela.cli --help
 python -m sentinela.cli --version
-python -m pytest
-```
+python -m sentinela.cli --check-config
+python -m pytest -q
+~~~
 
-Os comandos de CLI nesta etapa não fazem requisições de rede nem executam verificações em ativos.
+Para validar um arquivo próprio, use:
+
+~~~bash
+python -m sentinela.cli --check-config caminho/para/settings.json
+~~~
+
+A validação apenas lê e verifica a estrutura do JSON. Não faz requisições de rede nem executa verificações em ativos. O arquivo de exemplo deve permanecer sem segredos.
