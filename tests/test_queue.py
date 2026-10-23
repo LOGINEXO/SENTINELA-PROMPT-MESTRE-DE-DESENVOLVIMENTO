@@ -68,3 +68,17 @@ def test_audit_requires_scope_allowlist(tmp_path, monkeypatch):
     assert job["payload"]["host"] == "example.com"
     with pytest.raises(Exception):
         queue.enqueue("passive_audit", {"host": "other.example"})
+
+
+def test_active_audit_requires_separate_allowlist_and_confirmation(tmp_path, monkeypatch):
+    monkeypatch.setenv("SENTINELA_QUEUE_DB", str(tmp_path / "queue.sqlite3"))
+    active_scope = tmp_path / "active-scope.txt"
+    active_scope.write_text("active.example.com\n", encoding="utf-8")
+    monkeypatch.setenv("SENTINELA_ACTIVE_SCOPE_FILE", str(active_scope))
+    with pytest.raises(queue.QueueError, match="confirm-authorized"):
+        queue.enqueue("active_audit", {"host": "active.example.com"})
+    job = queue.enqueue("active_audit", {"host": "active.example.com", "confirm_authorized": True})
+    assert job["task_type"] == "active_audit"
+    assert job["payload"] == {"host": "active.example.com", "confirm_authorized": True}
+    with pytest.raises(queue.QueueError, match="fora do escopo"):
+        queue.enqueue("active_audit", {"host": "other.example.com", "confirm_authorized": True})
