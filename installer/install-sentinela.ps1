@@ -50,7 +50,7 @@ if (-not $PythonExe -and (Has-Command "python")) {
 if (-not $PythonExe) {
     throw "Python nao foi encontrado apos a instalacao. Reinicie o Windows e use o atalho 'Instalar / reparar dependencias'."
 }
-& $PythonExe -c "import sys; raise SystemExit(0 if sys.version_info -ge (3,11) else 1)"
+& $PythonExe -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)"
 if ($LASTEXITCODE -ne 0) { throw "O Sentinela exige Python 3.11 ou superior." }
 
 if (-not (Has-Command "php")) {
