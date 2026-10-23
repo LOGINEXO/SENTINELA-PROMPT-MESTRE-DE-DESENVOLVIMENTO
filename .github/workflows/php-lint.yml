@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SENTINELA_LOCAL_MODE=1 php -S 127.0.0.1:8081 -t web >/tmp/sentinela-php-local.log 2>&1 &
+          php -S 127.0.0.1:8081 -t web >/tmp/sentinela-php-local.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           code=""
