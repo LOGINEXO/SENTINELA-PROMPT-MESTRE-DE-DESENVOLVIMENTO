@@ -73,6 +73,8 @@ def _request(hostname: str, path: str, timeout: float) -> dict[str, Any]:
             wrapped = context.wrap_socket(raw, server_hostname=hostname)
             wrapped.settimeout(timeout)
             request_path = path if path.startswith("/") else "/"
+            if any(ord(char) < 32 or ord(char) == 127 for char in request_path):
+                raise SiteCrawlError("Caminho contém caracteres de controle; requisição bloqueada.")
             request = (
                 f"GET {request_path} HTTP/1.1\r\nHost: {hostname}\r\n"
                 "User-Agent: Sentinela/0.4.0 (authorized-site-review)\r\n"
