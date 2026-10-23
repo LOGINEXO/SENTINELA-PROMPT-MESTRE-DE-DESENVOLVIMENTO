@@ -34,3 +34,4 @@ Inteligência pública, auditoria passiva, escopo, relatórios e futuras funçõ
 ## Dados privados
 
 Configurações locais, escopo real, credenciais e relatórios não devem ser versionados nem armazenados na raiz pública de um servidor web. O arquivo real `config/authorized_targets.txt` está no `.gitignore`.
+\n\n## Etapa 6 — Interface PHP\n\nA interface pública está em `web/`. Ela chama a CLI Python com argumentos separados (sem shell), valida entradas, verifica a allowlist antes da auditoria, usa token CSRF e escapa saídas HTML. O document root deve apontar exclusivamente para `web/`; o escopo real e os relatórios devem permanecer fora da raiz pública. A interface é síncrona e não fornece fila, pausa ou cancelamento; não deve ser exposta publicamente sem autenticação e controles operacionais adicionais. Consulte `docs/php-interface.md`.\n
