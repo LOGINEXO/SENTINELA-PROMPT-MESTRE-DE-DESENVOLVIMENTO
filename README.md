@@ -1,6 +1,6 @@
 # Sentinela
 
-Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–10: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo, interface PHP, fila persistente, rascunhos de e-mail, verificação ativa HTTPS limitada e revisão de preparação para publicação.
+Plataforma open source, local-first, de inteligência pública e auditoria defensiva. Cada instalação roda no próprio computador e mantém fila, banco SQLite, relatórios JSON e rascunhos localmente. Não há login, conta de usuário, servidor central ou sincronização de relatórios.
 
 ## Requisitos
 
@@ -92,7 +92,7 @@ Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit
 
 ## Etapa 6 — Interface PHP
 
-A interface web fica em `web/index.php`. Configure o document root do servidor web **somente** para `web/`; mantenha o repositório, o escopo real e os relatórios fora da raiz pública. Requer PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Para desenvolvimento local, configure `SENTINELA_WEB_USERNAME` e `SENTINELA_WEB_PASSWORD` (senha exclusiva com pelo menos 16 caracteres), execute na raiz `php -S 127.0.0.1:8080 -t web` e abra `http://127.0.0.1:8080`. O navegador solicitará autenticação. O painel responde HTTP 503 se as credenciais não estiverem configuradas. Acesso remoto exige HTTPS/TLS. Configure `SENTINELA_PYTHON` se o processo PHP não localizar o interpretador correto.
+A interface web fica em `web/index.php` e é **local-only**: não existe login, cadastro, hospedagem central nem armazenamento remoto de relatórios. No PowerShell, execute `$env:SENTINELA_LOCAL_MODE = "1"` e `php -S 127.0.0.1:8080 -t web`; abra `http://127.0.0.1:8080`. O servidor deve ficar ligado somente a `127.0.0.1`. Cada instalação mantém seu próprio banco SQLite, histórico, relatórios e rascunhos em `reports/` no computador do usuário. Não publique o painel na internet, não use proxy/túnel e não altere o bind para `0.0.0.0`. Configure `SENTINELA_PYTHON` se o PHP não localizar o interpretador correto.
 
 A interface enfileira consultas NVD, auditorias passivas e verificações ativas HTTPS limitadas com autorização separada, exibe histórico e controles PLAY/PAUSE/STOP e permite gerar rascunhos de e-mail. Consulte [docs/php-interface.md](docs/php-interface.md), [docs/queue-controls.md](docs/queue-controls.md), [docs/email-drafts.md](docs/email-drafts.md) e [docs/active-audit.md](docs/active-audit.md).
 
@@ -103,7 +103,7 @@ python -m sentinela.audit meu-dominio.example --export-json auditoria.json
 python -m sentinela.cli --nvd-search "OpenSSH" --limit 10 --export-json cves.json
 ~~~
 
-Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A sanitização reduz exposição acidental, mas não substitui a revisão manual antes de compartilhar.
+Os arquivos são gravados em `reports/` no computador onde o comando é executado, sanitizados e ignorados pelo Git. Cada PC mantém seu próprio histórico e relatórios; o projeto não os envia a um servidor central. A sanitização reduz exposição acidental, mas não substitui a revisão manual antes de compartilhar.
 
 ## Etapas
 
@@ -116,7 +116,7 @@ Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A san
 - [x] 7 — Fila persistente e controles PLAY/PAUSE/STOP.
 - [x] 8 — Rascunhos de e-mail e revisão manual.
 - [x] 9 — Verificação ativa HTTPS limitada, com escopo de autorização separado.
-- [x] 10 — Revisão de segurança e preparação para publicação (a implantação em hospedagem ainda exige seguir a checklist).
+- [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço).
 
 Inteligência pública não concede autorização para testar ativos. A verificação ativa implementada faz somente um GET HTTPS à raiz de hostname em allowlist ativa separada, sem seguir redirecionamentos; não há exploração nem varredura de portas. Não há envio automático de e-mails.
 
@@ -133,7 +133,7 @@ Inteligência pública não concede autorização para testar ativos. A verifica
 - `tests/`: testes automatizados offline.
 - `reports/`: relatórios locais ignorados pelo Git.
 
-Mantenha configurações privadas, escopo real e relatórios fora da raiz pública de servidores web. Consulte `docs/architecture.md`, `docs/security.md`, `docs/responsible-disclosure.md` e a [checklist de publicação](docs/release-checklist.md).
+Mantenha configurações privadas, escopo real e relatórios fora da raiz pública de servidores web. Consulte `docs/architecture.md`, `docs/security.md`, `docs/responsible-disclosure.md` e a [checklist de distribuição](docs/release-checklist.md).
 
 ## Licença
 

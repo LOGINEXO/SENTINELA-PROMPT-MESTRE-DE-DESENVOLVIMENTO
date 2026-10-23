@@ -1,46 +1,36 @@
-# Etapa 6 — Interface PHP
+# Interface local do Sentinela
 
-A interface em `web/index.php` oferece consulta pública NVD/CVE e auditoria passiva HTTPS de hostname previamente autorizado, enfileirando essas tarefas em SQLite. O painel exibe o estado, o histórico e os controles PLAY/PAUSE/STOP. Para tarefas concluídas, é possível gerar um rascunho de e-mail local, que não é enviado automaticamente. O processo worker deve ser iniciado separadamente conforme `docs/queue-controls.md`.
+A interface PHP é uma interface gráfica para a instalação local do Sentinela. **Não é um serviço hospedado nem uma aplicação multiusuário.** Não há cadastro, login, contas ou armazenamento central.
 
-## Requisitos
+## Iniciar no computador do usuário
 
-- PHP 8.0+ recomendado, com sessões, `proc_open` e suporte a HTTP Basic Auth (`PHP_AUTH_USER` / `PHP_AUTH_PW`) habilitados.
-- Python 3.11+ e dependências do projeto instaladas no servidor.
-- Arquivo local `config/authorized_targets.txt` preenchido com hostnames autorizados. O arquivo não deve ser versionado.
-- Servidor web configurado para servir **somente** o diretório `web/`; a raiz do repositório deve ficar fora do document root público.
-- Variáveis de ambiente `SENTINELA_WEB_USERNAME` e `SENTINELA_WEB_PASSWORD` configuradas no processo PHP. A senha deve ter pelo menos 16 caracteres e ser exclusiva.
-
-## Autenticação obrigatória
-
-O painel exige HTTP Basic Auth. Se as variáveis de ambiente não estiverem configuradas, ou se a senha tiver menos de 16 caracteres, o painel responde com HTTP 503 e não processa ações. Credenciais incorretas recebem HTTP 401. Não use valores de exemplo em produção e não coloque segredos no Git.
-
-Configure as variáveis no ambiente do serviço PHP/web server ou no gerenciador de segredos da hospedagem. O arquivo `.env.example` é apenas documentação e **não é carregado automaticamente** pelo PHP. Em instalações PHP-FPM/FastCGI, confirme que o servidor encaminha as variáveis de ambiente ao processo e que `PHP_AUTH_USER` / `PHP_AUTH_PW` chegam corretamente ao PHP.
-
-**Acesso remoto exige HTTPS/TLS.** Não publique o painel em HTTP aberto. Para desenvolvimento local, limite o servidor a `127.0.0.1`.
-
-## Execução local
-
-Na raiz do projeto, configure primeiro o escopo autorizado seguindo o README. Defina as variáveis no terminal antes de iniciar o PHP. Exemplo em PowerShell (substitua os valores por credenciais próprias):
+Requisitos: PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Na raiz do repositório, abra PowerShell:
 
 ```powershell
-$env:SENTINELA_WEB_USERNAME = "sentinela-admin"
-$env:SENTINELA_WEB_PASSWORD = "substitua-por-uma-senha-unica-com-mais-de-16-caracteres"
 php -S 127.0.0.1:8080 -t web
 ```
 
-Abra `http://127.0.0.1:8080`; o navegador solicitará usuário e senha. O servidor embutido é para desenvolvimento local, não para exposição pública. Se o executável Python não for encontrado pelo processo PHP, configure `SENTINELA_PYTHON` com o caminho do interpretador do ambiente virtual.
+Abra `http://127.0.0.1:8080`. Não precisa configurar usuário nem senha. Mantenha o servidor ligado a `127.0.0.1`; não use `0.0.0.0`, proxy reverso, túnel ou hospedagem pública. A aplicação rejeita pedidos que não venham de loopback ou que contenham cabeçalhos de proxy encaminhado.
 
-## Controles implementados
+## Onde os dados ficam
 
-- HTTP Basic Auth obrigatório, com falha fechada quando as variáveis estão ausentes ou a senha é curta.
-- Token CSRF de sessão verificado em cada POST.
-- Escape de conteúdo dinâmico HTML e cabeçalhos básicos de segurança.
-- Validação de tamanho/formato para entradas e limite NVD entre 1 e 100.
-- Verificação prévia de hostname na allowlist local para a auditoria; o núcleo Python repete a validação e as verificações DNS/IP.
-- Saída do processo limitada e exibida como texto escapado, não como HTML.
-- Nenhuma credencial NVD é solicitada ou armazenada na interface.
-- `web/.htaccess` desativa listagem de diretórios em Apache.
+- Banco SQLite da fila e histórico: `reports/queue.sqlite3` por padrão.
+- Relatórios JSON: diretório `reports/` ou caminho local informado pelo comando de exportação.
+- Rascunhos de e-mail: `reports/email-drafts/`.
+- Listas de escopo: arquivos locais `config/authorized_targets.txt` e `config/authorized_active_targets.txt`, que não devem ser versionados.
 
-## Limitações operacionais
+Esses arquivos ficam no computador em que o Sentinela é executado. Cada instalação possui banco, histórico e relatórios próprios. O projeto não envia relatórios para servidor central nem sincroniza dados entre computadores. Se o usuário mover o repositório, copiar os arquivos locais ou configurar manualmente outro caminho, isso é uma ação local do usuário.
 
-Autenticação do painel não substitui controles de acesso da infraestrutura. Use TLS, restrinja acesso por rede/VPN quando possível, aplique limites de requisições e timeout no servidor web e monitore o serviço. A execução acontece em worker separado. Os rascunhos ficam em `reports/email-drafts/`; revise manualmente destinatários e conteúdo. Não mantenha relatórios, escopo real, segredos ou a raiz do repositório sob o document root público.
+## Tráfego de rede esperado
+
+A busca NVD consulta a API pública da NVD para obter informações de vulnerabilidades. As auditorias conectam-se aos hostnames que o usuário incluiu nas allowlists locais e para os quais tem autorização. Isso é tráfego de consulta/auditoria, não upload do relatório para um serviço do Sentinela.
+
+## Proteções
+
+- A interface só aceita conexões de loopback e rejeita cabeçalhos de proxy encaminhado.
+- Formulários POST verificam token CSRF.
+- Entradas são validadas e saídas HTML são escapadas.
+- Auditorias respeitam allowlists locais separadas para escopo passivo e ativo.
+- Rascunhos de e-mail são criados localmente e nunca enviados automaticamente.
+
+Não exponha o servidor local na rede. A proteção local não substitui autorização documentada para auditar ativos.
