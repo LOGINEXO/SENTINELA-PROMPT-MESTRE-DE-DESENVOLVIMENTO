@@ -9,7 +9,7 @@ Esta lista é para publicar o código no GitHub e permitir que cada usuário exe
 - [ ] Confirmar que nenhum segredo, banco, relatório ou allowlist real foi versionado.
 - [ ] Manter dependências e instruções de instalação atualizadas.
 
-## Execução local
+## Compatibilidade e instalação\n\n- [ ] Executar CI Python em Ubuntu e Windows com Python 3.11 e 3.12.\n- [ ] Validar sintaxe dos scripts de instalação/inicialização de Linux e Windows.\n- [ ] Confirmar que os instaladores preservam allowlists locais já existentes.\n- [ ] Confirmar que o inicializador usa o Python do ambiente virtual e mantém o painel em `127.0.0.1:8080`.\n- [ ] Documentar que macOS não faz parte das plataformas suportadas atualmente.\n\n## Execução local
 
 - [ ] Confirmar que a interface abre em `127.0.0.1` sem login nem cadastro.
 - [ ] Confirmar que a interface rejeita pedidos que não venham de loopback e cabeçalhos de proxy encaminhado.
