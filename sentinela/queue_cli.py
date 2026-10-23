@@ -16,6 +16,9 @@ def main(argv: list[str] | None = None) -> int:
     nvd.add_argument("--limit", type=int, default=10)
     audit = sub.add_parser("add-audit", help="adiciona auditoria passiva autorizada à fila")
     audit.add_argument("--host", required=True)
+    crawl = sub.add_parser("add-crawl", help="adiciona rastreamento limitado de páginas HTTPS autorizadas")
+    crawl.add_argument("--host", required=True)
+    crawl.add_argument("--max-pages", type=int, default=10)
     active = sub.add_parser("add-active-audit", help="adiciona verificação ativa HTTPS limitada; requer escopo separado")
     active.add_argument("--host", required=True)
     active.add_argument("--confirm-authorized", action="store_true",
@@ -30,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
             output = enqueue("nvd_search", {"query": args.query, "limit": args.limit})
         elif args.command == "add-audit":
             output = enqueue("passive_audit", {"host": args.host})
+        elif args.command == "add-crawl":
+            output = enqueue("site_crawl", {"host": args.host, "max_pages": args.max_pages})
         elif args.command == "add-active-audit":
             if not args.confirm_authorized:
                 raise QueueError("Use --confirm-authorized somente após confirmar autorização documentada.")
