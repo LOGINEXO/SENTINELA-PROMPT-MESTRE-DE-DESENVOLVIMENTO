@@ -80,6 +80,8 @@ function allowed_host(string $host): bool
 }
 
 $result = null;
+$notice = '';
+$queueStatus = null;
 $error = '';
 $action = '';
 $query = '';
@@ -96,36 +98,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'nvd') {
             $query = trim(is_string($_POST['query'] ?? null) ? $_POST['query'] : '');
             $limit = is_string($_POST['limit'] ?? null) ? $_POST['limit'] : '10';
-            if ($query === '' || strlen($query) > 120 || preg_match('/[\x00-\x1F\x7F]/', $query)) {
+            if ($query === '' || strlen($query) > 120 || preg_match('/[\\x00-\\x1F\\x7F]/', $query)) {
                 $error = 'Informe uma palavra-chave válida (até 120 caracteres).';
             } elseif (!ctype_digit($limit) || (int)$limit < 1 || (int)$limit > 100) {
                 $error = 'O limite deve ser um número entre 1 e 100.';
             } else {
-                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.cli', '--nvd-search', $query, '--limit', (string)(int)$limit]);
+                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.queue_cli', 'add-nvd', '--query', $query, '--limit', (string)(int)$limit]);
                 if ($code !== 0) {
-                    $error = 'A consulta NVD falhou. ' . trim($stderr);
+                    $error = 'Não foi possível enfileirar a consulta NVD. ' . trim($stderr);
                 } else {
-                    $result = $stdout;
+                    $notice = 'Consulta NVD adicionada à fila.';
                 }
             }
         } elseif ($action === 'audit') {
             $host = strtolower(trim(is_string($_POST['host'] ?? null) ? $_POST['host'] : ''));
-            if ($host === '' || strlen($host) > 253 || !preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/D', $host)) {
+            if ($host === '' || strlen($host) > 253 || !preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/D', $host)) {
                 $error = 'Informe apenas um hostname DNS, sem URL, porta ou caminho.';
             } elseif (!allowed_host($host)) {
-                $error = 'Hostname não consta na allowlist local. Nenhuma auditoria foi iniciada.';
+                $error = 'Hostname não consta na allowlist local. Nenhuma auditoria foi enfileirada.';
             } else {
-                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.audit', $host]);
+                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.queue_cli', 'add-audit', '--host', $host]);
                 if ($code !== 0) {
-                    $error = 'A auditoria não foi concluída. ' . trim($stderr);
+                    $error = 'Não foi possível enfileirar a auditoria. ' . trim($stderr);
                 } else {
-                    $result = $stdout;
+                    $notice = 'Auditoria passiva adicionada à fila.';
                 }
+            }
+        } elseif (in_array($action, ['play', 'pause', 'stop'], true)) {
+            [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.queue_cli', 'control', $action]);
+            if ($code !== 0) {
+                $error = 'Não foi possível alterar o controle da fila. ' . trim($stderr);
+            } else {
+                $notice = ['play' => 'Fila liberada para execução.', 'pause' => 'Fila pausada; a tarefa em andamento pode terminar.', 'stop' => 'Fila parada; tarefas pendentes foram canceladas.'][ $action ];
             }
         } else {
             $error = 'Ação inválida.';
         }
     }
+}
+[$queueCode, $queueStdout, $queueStderr] = run_cli(['-m', 'sentinela.queue_cli', 'status', '--limit', '10']);
+if ($queueCode === 0) {
+    $decoded = json_decode($queueStdout, true);
+    if (is_array($decoded)) {
+        $queueStatus = $decoded;
+    }
+} elseif ($error === '') {
+    $error = 'Não foi possível ler o estado da fila. ' . trim($queueStderr);
 }
 ?>
 <!doctype html>
@@ -146,9 +164,12 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <header>
 <div class="eyebrow">Painel defensivo</div>
 <h1>Sentinela</h1>
-<p>Inteligência pública NVD/CVE e auditoria passiva HTTPS/TLS com escopo autorizado.</p>
+<p>Inteligência pública NVD/CVE e auditoria passiva HTTPS/TLS com escopo autorizado. As tarefas são executadas pela fila.</p>
 </header>
 
+<?php if ($notice !== ''): ?>
+<div class="notice success" role="status"><?= e($notice) ?></div>
+<?php endif; ?>
 <?php if ($error !== ''): ?>
 <div class="notice error" role="alert"><strong>Não concluído:</strong> <?= e($error) ?></div>
 <?php endif; ?>
@@ -193,8 +214,51 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 </section>
 <?php endif; ?>
 
+<?php if (is_array($queueStatus)): ?>
+<section class="panel" style="margin-top:18px">
+<h2>Fila de execução</h2>
+<p>Estado atual: <strong><?= e((string)$queueStatus['mode']) ?></strong>. O worker Python precisa estar ativo em um terminal/serviço separado para consumir tarefas.</p>
+<div class="grid">
+<?php foreach (['queued' => 'Na fila', 'running' => 'Em execução', 'completed' => 'Concluídas', 'failed' => 'Falhas', 'stopped' => 'Paradas'] as $key => $caption): ?>
+<div class="panel"><strong><?= e($caption) ?></strong><div><?= (int)($queueStatus['counts'][$key] ?? 0) ?></div></div>
+<?php endforeach; ?>
+</div>
+<div class="grid" style="margin-top:12px">
+<?php foreach (['play' => 'PLAY — executar', 'pause' => 'PAUSE — pausar', 'stop' => 'STOP — cancelar pendentes'] as $control => $caption): ?>
+<form method="post" class="panel">
+<input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+<input type="hidden" name="action" value="<?= e($control) ?>">
+<button type="submit"><?= e($caption) ?></button>
+</form>
+<?php endforeach; ?>
+</div>
+<h2 style="margin-top:22px">Histórico recente</h2>
+<?php if (empty($queueStatus['jobs'])): ?>
+<p>Nenhuma tarefa registrada.</p>
+<?php else: ?>
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;text-align:left">
+<thead><tr><th style="padding:8px">ID</th><th style="padding:8px">Tipo</th><th style="padding:8px">Estado</th><th style="padding:8px">Criada em</th><th style="padding:8px">Detalhes</th></tr></thead>
+<tbody>
+<?php foreach ($queueStatus['jobs'] as $job): ?>
+<tr>
+<td style="padding:8px;border-top:1px solid var(--line)"><?= (int)$job['id'] ?></td>
+<td style="padding:8px;border-top:1px solid var(--line)"><?= e((string)$job['task_type']) ?></td>
+<td style="padding:8px;border-top:1px solid var(--line)"><?= e((string)$job['status']) ?></td>
+<td style="padding:8px;border-top:1px solid var(--line)"><?= e((string)$job['created_at']) ?></td>
+<td style="padding:8px;border-top:1px solid var(--line)">
+<?php if (!empty($job['error'])): ?><?= e((string)$job['error']) ?><?php elseif (isset($job['result'])): ?><details><summary>Ver resultado</summary><pre><?= e(json_encode($job['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '') ?></pre></details><?php else: ?>—<?php endif; ?>
+</td>
+</tr>
+<?php endforeach; ?>
+</tbody></table>
+</div>
+<?php endif; ?>
+</section>
+<?php endif; ?>
+
 <footer>
-<strong>Segurança:</strong> use apenas sistemas com autorização documentada. Esta interface executa uma ação por envio; fila, pausa e cancelamento pertencem à etapa 7. Não exponha o diretório raiz do projeto nem os relatórios ao público.
+<strong>Segurança:</strong> use apenas sistemas com autorização documentada. PLAY libera o worker, PAUSE impede novas tarefas de começar e STOP cancela as pendentes. Uma requisição já iniciada termina dentro do timeout configurado. Não exponha a raiz do repositório, a base SQLite nem os relatórios ao público.
 </footer>
 </main>
 </body>

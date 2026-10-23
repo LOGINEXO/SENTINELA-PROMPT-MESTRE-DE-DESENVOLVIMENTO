@@ -7,8 +7,9 @@
 - Etapa 3 — Relatórios JSON sanitizados: concluída.
 - Etapa 4 — Auditoria passiva HTTPS/TLS: concluída.
 - Etapa 5 — Escopo explícito e proteção de destinos: implementada.
-- Etapa 6 — Interface PHP síncrona: implementada nesta branch, aguardando validação do CI.
-- Etapas 7–10: planejadas, não implementadas.
+- Etapa 6 — Interface PHP: implementada.
+- Etapa 7 — Fila SQLite e controles cooperativos PLAY/PAUSE/STOP: implementada nesta branch, aguardando validação do CI.
+- Etapas 8–10: planejadas, não implementadas.
 
 ## Etapa 5 — Escopo e controles de destino
 
@@ -40,3 +41,8 @@ Configurações locais, escopo real, credenciais e relatórios não devem ser ve
 ## Etapa 6 — Interface PHP
 
 A interface pública está em `web/`. Ela chama a CLI Python com argumentos separados (sem shell), valida entradas, verifica a allowlist antes da auditoria, usa token CSRF e escapa saídas HTML. O document root deve apontar exclusivamente para `web/`; o escopo real e os relatórios devem permanecer fora da raiz pública. A interface é síncrona e não fornece fila, pausa ou cancelamento; não deve ser exposta publicamente sem autenticação e controles operacionais adicionais. Consulte `docs/php-interface.md`.
+
+
+## Etapa 7 — Fila persistente
+
+A fila usa SQLite em `reports/queue.sqlite3` por padrão e aceita apenas consultas públicas NVD e auditorias passivas limitadas à allowlist exata. A interface PHP apenas enfileira tarefas e altera o estado global; `sentinela.queue_worker` é um processo separado e persistente que retira tarefas uma por vez. PLAY libera a fila, PAUSE impede o início de novas tarefas e STOP cancela tarefas pendentes e impede novas retiradas até PLAY. A tarefa de rede já em andamento não é interrompida instantaneamente; ela termina sob os timeouts existentes e fica marcada como parada se o modo continuar STOP. Consulte `docs/queue-controls.md`.

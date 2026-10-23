@@ -1,6 +1,6 @@
 # Etapa 6 — Interface PHP
 
-A interface em `web/index.php` oferece duas ações síncronas: consulta explícita à API pública NVD/CVE e auditoria passiva HTTPS de um hostname previamente autorizado. A interface não implementa fila, pausa, parada, testes ativos ou envio de e-mails; esses itens pertencem a etapas posteriores.
+A interface em `web/index.php` oferece consulta pública NVD/CVE e auditoria passiva HTTPS de hostname previamente autorizado, enfileirando essas tarefas em SQLite. O painel exibe o estado, o histórico e os controles PLAY/PAUSE/STOP. O processo worker deve ser iniciado separadamente conforme `docs/queue-controls.md`.
 
 ## Requisitos
 
@@ -33,4 +33,4 @@ Se o executável Python não for encontrado pelo processo PHP, configure a vari�
 
 ## Limitações operacionais
 
-A execução é síncrona: a requisição HTTP fica aberta até o comando Python terminar. Não publique esta interface sem autenticação/autorização de acesso, limites no servidor web, timeout de processo e monitoramento. A etapa 7 deve introduzir uma fila e controles de execução. Configure TLS no servidor web quando acessar remotamente. Não mantenha relatórios, escopo real, segredos ou a raiz do repositório sob o document root público.
+A inclusão de tarefas e os controles são comandos curtos, mas a execução acontece em processo worker separado. Não publique esta interface sem autenticação/autorização de acesso, limites no servidor web, timeout de processo e monitoramento. A fila não substitui autenticação. Configure TLS no servidor web quando acessar remotamente. Não mantenha relatórios, escopo real, segredos ou a raiz do repositório sob o document root público.

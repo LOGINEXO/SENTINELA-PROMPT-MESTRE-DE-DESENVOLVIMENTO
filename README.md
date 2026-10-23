@@ -1,6 +1,6 @@
 # Sentinela
 
-Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–6: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo e interface PHP.
+Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–7: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo, interface PHP e fila persistente.
 
 ## Requisitos
 
@@ -94,7 +94,7 @@ Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit
 
 A interface web fica em `web/index.php`. Configure o document root do servidor web **somente** para `web/`; mantenha o repositório, o escopo real e os relatórios fora da raiz pública. Requer PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Para desenvolvimento local, execute na raiz do projeto `php -S 127.0.0.1:8080 -t web` e abra `http://127.0.0.1:8080`. Configure `SENTINELA_PYTHON` se o processo PHP não localizar o interpretador correto.
 
-A interface executa consulta NVD e auditoria passiva de forma síncrona. Não a exponha publicamente sem autenticação, TLS, limites de requisições e timeout no servidor/processo. Fila e controles PLAY/PAUSE/STOP são parte da etapa 7. Consulte [docs/php-interface.md](docs/php-interface.md).
+A interface enfileira consultas NVD e auditorias passivas autorizadas, e exibe o histórico e controles PLAY/PAUSE/STOP. Consulte [docs/php-interface.md](docs/php-interface.md) e [docs/queue-controls.md](docs/queue-controls.md).
 
 ## Relatórios JSON
 
@@ -113,7 +113,7 @@ Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A san
 - [x] 4 — Auditoria passiva HTTPS/TLS.
 - [x] 5 — Controles de escopo e mitigação de SSRF/DNS rebinding.
 - [x] 6 — Interface PHP (síncrona; sem fila).
-- [ ] 7 — Fila e controles PLAY/PAUSE/STOP.
+- [x] 7 — Fila persistente e controles PLAY/PAUSE/STOP.
 - [ ] 8 — Rascunhos de e-mail e revisão manual.
 - [ ] 9 — Testes ativos autorizados.
 - [ ] 10 — Revisão e publicação.
@@ -126,6 +126,7 @@ Inteligência pública não concede autorização para testar ativos. Etapas fut
 - `sentinela/audit/`: auditoria HTTPS passiva.
 - `sentinela/scope.py`: allowlist, resolução DNS e validação de destinos de redirecionamento.
 - `sentinela/reports.py`: formato, sanitização e exportação JSON.
+- `sentinela/queue.py`, `sentinela/queue_worker.py`, `sentinela/queue_cli.py`: fila SQLite, worker e controles.
 - `config/`: configurações e exemplos de escopo.
 - `tests/`: testes automatizados offline.
 - `reports/`: relatórios locais ignorados pelo Git.
