@@ -23,7 +23,7 @@ python -m sentinela.queue_cli control play
 python -m sentinela.queue_cli control stop
 ```
 
-O modo inicial da fila é PLAY. PAUSE impede que novas tarefas comecem; a tarefa que já está em execução pode terminar. PLAY retoma o processamento. STOP marca como paradas as tarefas pendentes e impede novas execuções até novo PLAY; tarefas novas adicionadas enquanto STOP está ativo permanecem na fila? **Não**: ao usar STOP, tarefas já pendentes são marcadas como paradas. Novas tarefas só serão executadas depois de PLAY, se forem adicionadas depois do STOP.
+O modo inicial da fila é PLAY. PAUSE impede que novas tarefas comecem; a tarefa que já está em execução pode terminar. PLAY retoma o processamento. STOP marca como paradas as tarefas pendentes e impede novas execuções até novo PLAY. Se uma nova tarefa for adicionada enquanto STOP está ativo, ela fica aguardando e só será executada após PLAY.
 
 ## Interface PHP
 
