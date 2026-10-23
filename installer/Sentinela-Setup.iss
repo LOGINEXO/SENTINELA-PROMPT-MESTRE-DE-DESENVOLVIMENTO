@@ -39,4 +39,4 @@ Name: "{autoprograms}\Sentinela\Abrir Sentinela"; Filename: "powershell.exe"; Pa
 Name: "{autodesktop}\Sentinela"; Filename: "powershell.exe"; Parameters: "-NoExit -NoProfile -ExecutionPolicy Bypass -File ""{app}\start-sentinela.ps1"""; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-sentinela.ps1"""; WorkingDir: "{app}"; Description: "Instalar dependências e preparar o Sentinela"; Flags: postinstall waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoExit -NoProfile -ExecutionPolicy Bypass -File ""{app}\install-sentinela.ps1"""; WorkingDir: "{app}"; Description: "Instalar dependências e preparar o Sentinela"; Flags: postinstall waituntilterminated
