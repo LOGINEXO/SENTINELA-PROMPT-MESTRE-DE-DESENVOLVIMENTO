@@ -1,4 +1,5 @@
 import json
+import re
 
 import pytest
 
@@ -61,5 +62,10 @@ def test_draft_file_overwrites_atomically(tmp_path, monkeypatch):
     output = create_email_draft(job_id, output_dir=tmp_path / "drafts")
     first = output.read_text(encoding="utf-8")
     second = create_email_draft(job_id, output_dir=tmp_path / "drafts")
+    second_content = second.read_text(encoding="utf-8")
+
     assert second == output
-    assert first == second.read_text(encoding="utf-8")
+    # The generated-at timestamp legitimately changes between writes.
+    timestamp = r"(?m)^\*\*Gerado em \(UTC\):\*\* .*?$"
+    assert re.sub(timestamp, "", first) == re.sub(timestamp, "", second_content)
+    assert re.search(timestamp, second_content)
