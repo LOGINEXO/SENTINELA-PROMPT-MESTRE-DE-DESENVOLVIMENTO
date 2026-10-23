@@ -90,7 +90,13 @@ A auditoria envia uma requisição `HEAD` por HTTPS na porta 443, verifica o cer
 
 Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit.md](docs/passive-audit.md).
 
-## Etapa 6 — Interface PHP\n\nA interface web fica em `web/index.php`. Configure o document root do servidor web **somente** para `web/`; mantenha o repositório, o escopo real e os relatórios fora da raiz pública. Requer PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Para desenvolvimento local, execute na raiz do projeto `php -S 127.0.0.1:8080 -t web` e abra `http://127.0.0.1:8080`. Configure `SENTINELA_PYTHON` se o processo PHP não localizar o interpretador correto.\n\nA interface executa consulta NVD e auditoria passiva de forma síncrona. Não a exponha publicamente sem autenticação, TLS, limites de requisições e timeout no servidor/processo. Fila e controles PLAY/PAUSE/STOP são parte da etapa 7. Consulte [docs/php-interface.md](docs/php-interface.md).\n\n## Relatórios JSON
+## Etapa 6 — Interface PHP
+
+A interface web fica em `web/index.php`. Configure o document root do servidor web **somente** para `web/`; mantenha o repositório, o escopo real e os relatórios fora da raiz pública. Requer PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Para desenvolvimento local, execute na raiz do projeto `php -S 127.0.0.1:8080 -t web` e abra `http://127.0.0.1:8080`. Configure `SENTINELA_PYTHON` se o processo PHP não localizar o interpretador correto.
+
+A interface executa consulta NVD e auditoria passiva de forma síncrona. Não a exponha publicamente sem autenticação, TLS, limites de requisições e timeout no servidor/processo. Fila e controles PLAY/PAUSE/STOP são parte da etapa 7. Consulte [docs/php-interface.md](docs/php-interface.md).
+
+## Relatórios JSON
 
 ~~~bash
 python -m sentinela.audit meu-dominio.example --export-json auditoria.json
@@ -105,8 +111,8 @@ Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A san
 - [x] 2 — Inteligência pública NVD/CVE.
 - [x] 3 — Relatórios locais JSON.
 - [x] 4 — Auditoria passiva HTTPS/TLS.
-- [ ] 5 — Controles de escopo e mitigação de SSRF/DNS rebinding (em validação).
-- [ ] 6 — Interface PHP.
+- [x] 5 — Controles de escopo e mitigação de SSRF/DNS rebinding.
+- [x] 6 — Interface PHP (síncrona; sem fila).
 - [ ] 7 — Fila e controles PLAY/PAUSE/STOP.
 - [ ] 8 — Rascunhos de e-mail e revisão manual.
 - [ ] 9 — Testes ativos autorizados.
