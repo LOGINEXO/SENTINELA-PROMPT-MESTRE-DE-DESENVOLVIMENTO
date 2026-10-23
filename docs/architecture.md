@@ -1,6 +1,6 @@
 # Arquitetura do Sentinela
 
-## Etapa atual: Inteligência pública (Etapa 2 em validação)
+## Etapa atual: Inteligência pública (Etapa 2 concluída e validada)
 
 A Etapa 1 estabeleceu a estrutura do repositório, o pacote Python, CLI, configuração local, documentação, testes básicos e CI. O GitHub Actions confirmou sucesso para a fundação.
 
@@ -9,7 +9,7 @@ A Etapa 2 acrescenta um cliente explícito para a API NVD CVE 2.0, normalizaçã
 ## Módulos planejados por etapa
 
 - Etapa 1 — Fundação: concluída e validada.
-- Etapa 2 — Inteligência pública: cliente NVD/CVE, normalização, tratamento de erros e testes simulados.
+- Etapa 2 — Inteligência pública: concluída e validada no GitHub Actions (26 testes aprovados).
 - Etapa 3 — Relatórios locais: formato comum, sanitização e exportação.
 - Etapa 4 — Auditoria passiva: verificações HTTPS, TLS e cabeçalhos em ativos autorizados.
 - Etapa 5 — Controle de escopo: validação de destinos, SSRF, DNS rebinding e redirecionamentos.

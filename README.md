@@ -26,7 +26,7 @@ Windows PowerShell:
 
 ~~~powershell
 py -3 -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 ~~~
 
@@ -71,7 +71,7 @@ A busca incremental aceita --modified-since e --modified-until com datas ISO 860
 ## Etapas do projeto
 
 - [x] Etapa 1 — Fundação: estrutura, configuração, documentação, testes básicos e CI validado.
-- [ ] Etapa 2 — Inteligência pública: cliente NVD/CVE, normalização, erros e testes simulados; aguardando validação do CI desta versão.
+- [x] Etapa 2 — Inteligência pública: cliente NVD/CVE, normalização, busca incremental, classificação técnica, tratamento de erros e testes simulados; CI validado.
 - [ ] Etapa 3 — Relatórios locais.
 - [ ] Etapa 4 — Auditoria passiva.
 - [ ] Etapa 5 — Controle de escopo e mitigação de SSRF/DNS rebinding.
