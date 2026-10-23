@@ -15,7 +15,7 @@ O Sentinela é um aplicativo open source local-first, não um serviço hospedado
 - Etapa 7 — Fila SQLite e controles cooperativos PLAY/PAUSE/STOP: implementada.
 - Etapa 8 — Rascunhos de e-mail em Markdown para revisão manual, sem envio automático: implementada.
 - Etapa 9 — Verificação ativa HTTPS limitada (um GET à raiz, escopo ativo separado e confirmação explícita): implementada.
-- Etapa 10 — Revisão de segurança para distribuição open source local: implementada.\n- Etapa 11 — Scripts de instalação/inicialização para Linux e Windows e CI Python em Ubuntu/Windows com Python 3.11 e 3.12: em validação.
+- Etapa 10 — Revisão de segurança para distribuição open source local: implementada.\n- Etapa 11 — Scripts de instalação/inicialização para Linux e Windows e CI Python em Ubuntu/Windows com Python 3.11 e 3.12: concluída; testes passaram antes do merge.
 
 ## Etapa 5 — Escopo e controles de destino
 
