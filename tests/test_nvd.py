@@ -88,6 +88,10 @@ class NVDTests(unittest.TestCase):
         mock_urlopen.return_value = FakeResponse(b"{}")
         with self.assertRaisesRegex(NVDClientError, "vulnerabilities"): search_cves("test")
 
+    def test_rejects_non_finite_timeout(self):
+        with self.assertRaises(ValueError): search_cves("test", timeout=float("nan"))
+        with self.assertRaises(ValueError): search_cves("test", timeout=float("inf"))
+
     def test_normalization_handles_missing_optional_fields(self):
         result = normalize_cve({"id": "CVE-2024-1111", "descriptions": []})
         self.assertEqual(result["description"], "")

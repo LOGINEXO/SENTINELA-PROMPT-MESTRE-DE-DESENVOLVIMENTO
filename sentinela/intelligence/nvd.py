@@ -6,6 +6,7 @@ assets mentioned by CVE records or performs security tests against them.
 from __future__ import annotations
 
 import json
+from math import isfinite
 import os
 import re
 from typing import Any
@@ -48,7 +49,7 @@ def _query(params: dict[str, str], *, limit: int, api_key: str | None,
            timeout: float) -> list[dict[str, Any]]:
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_RESULTS:
         raise ValueError(f"limit deve ser um inteiro entre 1 e {MAX_RESULTS}.")
-    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not isfinite(timeout) or timeout <= 0:
         raise ValueError("timeout deve ser um número positivo.")
     query = urlencode({**params, "resultsPerPage": limit})
     headers = {"User-Agent": "Sentinela/0.2.0 (public vulnerability intelligence)"}
