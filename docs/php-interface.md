@@ -7,7 +7,6 @@ A interface PHP é uma interface gráfica para a instalação local do Sentinela
 Requisitos: PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Na raiz do repositório, abra PowerShell:
 
 ```powershell
-$env:SENTINELA_LOCAL_MODE = "1"
 php -S 127.0.0.1:8080 -t web
 ```
 
