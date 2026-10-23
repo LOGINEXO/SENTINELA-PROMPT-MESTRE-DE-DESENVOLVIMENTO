@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from math import isfinite
 from pathlib import Path
 from typing import Any
 
@@ -76,6 +77,7 @@ def _require_positive_number(values: dict[str, Any], key: str) -> None:
     if (
         isinstance(value, bool)
         or not isinstance(value, (int, float))
+        or not isfinite(value)
         or value <= 0
     ):
         raise ConfigurationError(f"{key} deve ser um número positivo.")
