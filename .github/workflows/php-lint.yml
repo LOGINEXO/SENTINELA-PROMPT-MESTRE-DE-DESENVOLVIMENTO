@@ -1,4 +1,4 @@
-name: PHP interface lint and auth smoke test
+name: PHP interface lint, local mode and auth smoke tests
 
 on:
   push:
@@ -43,6 +43,24 @@ jobs:
           if [ "$code" != "503" ]; then
             cat /tmp/sentinela-php-missing-env.log
             echo "Expected HTTP 503 without configured credentials; got $code"
+            exit 1
+          fi
+          kill "$server_pid" 2>/dev/null || true
+          wait "$server_pid" 2>/dev/null || true
+          trap - EXIT
+
+          SENTINELA_LOCAL_MODE=1 php -S 127.0.0.1:8083 -t web >/tmp/sentinela-php-local.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          code=""
+          for attempt in {1..30}; do
+            code="$(curl --silent --show-error --output /tmp/sentinela-body --write-out '%{http_code}' http://127.0.0.1:8083/ || true)"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 0.2
+          done
+          if [ "$code" != "200" ]; then
+            cat /tmp/sentinela-php-local.log
+            echo "Expected HTTP 200 in local mode; got $code"
             exit 1
           fi
           kill "$server_pid" 2>/dev/null || true
