@@ -58,7 +58,7 @@ As consultas NVD só são feitas quando solicitadas explicitamente. A variável 
 
 **A auditoria não roda sem uma allowlist local preenchida manualmente.** Copie o arquivo de exemplo e adicione apenas hostnames para os quais você tem autorização documentada.
 
-Linux/macOS:
+Linux:
 
 ~~~bash
 cp config/authorized_targets.example.txt config/authorized_targets.txt
@@ -126,7 +126,8 @@ Os arquivos são gravados em `reports/` no computador onde o comando é executad
 - [x] 7 — Fila persistente e controles PLAY/PAUSE/STOP.
 - [x] 8 — Rascunhos de e-mail e revisão manual.
 - [x] 9 — Verificação ativa HTTPS limitada, com escopo de autorização separado.
-- [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço).\n- [ ] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas (em validação).
+- [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço). 
+- [ ] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas (em validação).
 
 Inteligência pública não concede autorização para testar ativos. A verificação ativa implementada faz somente um GET HTTPS à raiz de hostname em allowlist ativa separada, sem seguir redirecionamentos; não há exploração nem varredura de portas. Não há envio automático de e-mails.
 
