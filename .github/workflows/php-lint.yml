@@ -1,4 +1,4 @@
-name: PHP interface lint
+name: PHP interface lint and auth smoke test
 
 on:
   push:
@@ -21,5 +21,51 @@ jobs:
         with:
           php-version: '8.2'
           coverage: none
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Check PHP syntax
         run: php -l web/index.php
+      - name: Smoke test authentication fail-closed behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -S 127.0.0.1:8081 -t web >/tmp/sentinela-php-missing-env.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          code=""
+          for attempt in {1..30}; do
+            code="$(curl --silent --show-error --output /tmp/sentinela-body --write-out '%{http_code}' http://127.0.0.1:8081/ || true)"
+            if [ "$code" = "503" ]; then break; fi
+            sleep 0.2
+          done
+          if [ "$code" != "503" ]; then
+            cat /tmp/sentinela-php-missing-env.log
+            echo "Expected HTTP 503 without configured credentials; got $code"
+            exit 1
+          fi
+          kill "$server_pid" 2>/dev/null || true
+          wait "$server_pid" 2>/dev/null || true
+          trap - EXIT
+
+          SENTINELA_WEB_USERNAME=test-admin SENTINELA_WEB_PASSWORD=test-password-that-is-long-enough php -S 127.0.0.1:8082 -t web >/tmp/sentinela-php-auth.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          code=""
+          for attempt in {1..30}; do
+            code="$(curl --silent --show-error --output /tmp/sentinela-body --write-out '%{http_code}' http://127.0.0.1:8082/ || true)"
+            if [ "$code" = "401" ]; then break; fi
+            sleep 0.2
+          done
+          if [ "$code" != "401" ]; then
+            cat /tmp/sentinela-php-auth.log
+            echo "Expected HTTP 401 without credentials; got $code"
+            exit 1
+          fi
+          code="$(curl --silent --show-error --user 'test-admin:test-password-that-is-long-enough' --output /tmp/sentinela-body --write-out '%{http_code}' http://127.0.0.1:8082/)"
+          if [ "$code" != "200" ]; then
+            cat /tmp/sentinela-php-auth.log
+            echo "Expected HTTP 200 with valid credentials; got $code"
+            exit 1
+          fi
