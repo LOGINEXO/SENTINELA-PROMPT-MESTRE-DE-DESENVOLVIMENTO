@@ -33,7 +33,9 @@ def test_active_check_pins_public_ip_and_discards_bounded_response(monkeypatch):
         def close(self): events.append(("close",))
     
     fake_tls = FakeTLS()
-    monkeypatch.setattr(active.socket, "create_connection", lambda address, timeout: (events.append(("connect", address, timeout)) or object()))
+    class FakeRaw:
+        def close(self): events.append(("raw-close",))
+    monkeypatch.setattr(active.socket, "create_connection", lambda address, timeout: (events.append(("connect", address, timeout)) or FakeRaw()))
     monkeypatch.setattr(active.ssl, "create_default_context", lambda: type("Context", (), {"wrap_socket": lambda self, raw, server_hostname: (events.append(("sni", server_hostname)) or fake_tls)})())
 
     class FakeResponse:
