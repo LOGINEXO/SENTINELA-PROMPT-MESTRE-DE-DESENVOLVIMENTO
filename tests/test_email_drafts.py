@@ -33,7 +33,7 @@ def test_create_draft_from_completed_job_without_sending(tmp_path, monkeypatch):
     assert output.name == f"job-{job_id}.md"
     assert "RASCUNHO NÃO ENVIADO" in content
     assert "CVE-2024-12345" in content
-    assert "Não confirmam exposição" in content
+    assert "não confirmam exposição" in content
     assert "should-not-leak" not in content
     assert "Para:** [preencher e revisar destinatários]" in content
 
