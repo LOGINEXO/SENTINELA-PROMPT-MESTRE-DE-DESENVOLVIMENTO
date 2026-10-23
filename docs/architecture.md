@@ -6,8 +6,9 @@
 - Etapa 2 — Inteligência pública NVD/CVE: concluída.
 - Etapa 3 — Relatórios JSON sanitizados: concluída.
 - Etapa 4 — Auditoria passiva HTTPS/TLS: concluída.
-- Etapa 5 — Escopo explícito e proteção de destinos: implementada nesta branch, aguardando validação do CI.
-- Etapas 6–10: planejadas, não implementadas.
+- Etapa 5 — Escopo explícito e proteção de destinos: implementada.
+- Etapa 6 — Interface PHP síncrona: implementada nesta branch, aguardando validação do CI.
+- Etapas 7–10: planejadas, não implementadas.
 
 ## Etapa 5 — Escopo e controles de destino
 
@@ -34,3 +35,8 @@ Inteligência pública, auditoria passiva, escopo, relatórios e futuras funçõ
 ## Dados privados
 
 Configurações locais, escopo real, credenciais e relatórios não devem ser versionados nem armazenados na raiz pública de um servidor web. O arquivo real `config/authorized_targets.txt` está no `.gitignore`.
+
+
+## Etapa 6 — Interface PHP
+
+A interface pública está em `web/`. Ela chama a CLI Python com argumentos separados (sem shell), valida entradas, verifica a allowlist antes da auditoria, usa token CSRF e escapa saídas HTML. O document root deve apontar exclusivamente para `web/`; o escopo real e os relatórios devem permanecer fora da raiz pública. A interface é síncrona e não fornece fila, pausa ou cancelamento; não deve ser exposta publicamente sem autenticação e controles operacionais adicionais. Consulte `docs/php-interface.md`.
