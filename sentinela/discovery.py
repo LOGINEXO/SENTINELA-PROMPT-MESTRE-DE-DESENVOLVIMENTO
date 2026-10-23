@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 MAX_QUERY_LENGTH = 120
 MAX_RESULTS = 10
 _TIMEOUT = 8
+_MAX_RESPONSE_BYTES = 1_000_000
 
 
 class _Results(HTMLParser):
@@ -29,7 +30,8 @@ class _Results(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_dict = dict(attrs)
-        if tag == "a" and "result__a" in (attrs_dict.get("class") or "").split():
+        classes = (attrs_dict.get("class") or "").split()
+        if tag == "a" and ({"result__a", "result-link"} & set(classes)):
             self._capture = True
             self._href = attrs_dict.get("href") or ""
             self._text = []
@@ -69,24 +71,32 @@ class _Results(HTMLParser):
 
 
 def discover_sites(query: str, *, limit: int = 10) -> dict:
-    """Return candidate links from DuckDuckGo HTML search without probing targets."""
+    """Return candidate links from DuckDuckGo Lite public search without probing targets."""
     if not isinstance(query, str) or not query.strip() or len(query.strip()) > MAX_QUERY_LENGTH:
         raise ValueError(f"Informe uma palavra-chave de até {MAX_QUERY_LENGTH} caracteres.")
     if any(ord(c) < 32 or ord(c) == 127 for c in query):
         raise ValueError("A palavra-chave contém caracteres de controle.")
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_RESULTS:
         raise ValueError(f"O limite deve ficar entre 1 e {MAX_RESULTS}.")
-    endpoint = "https://html.duckduckgo.com/html/?" + urlencode({"q": query.strip()})
-    request = Request(endpoint, headers={"User-Agent": "Sentinela/0.5 (public-search-discovery)", "Accept": "text/html"})
+
+    endpoint = "https://lite.duckduckgo.com/lite/?" + urlencode({"q": query.strip()})
+    request = Request(
+        endpoint,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml",
+        },
+    )
     try:
         with urlopen(request, timeout=_TIMEOUT) as response:
             if response.status != 200:
                 raise ValueError(f"Pesquisa pública retornou HTTP {response.status}.")
-            body = response.read(1_000_000 + 1)
+            body = response.read(_MAX_RESPONSE_BYTES + 1)
     except (HTTPError, URLError, TimeoutError, OSError) as exc:
         raise ValueError(f"Não foi possível consultar a pesquisa pública: {type(exc).__name__}.") from exc
-    if len(body) > 1_000_000:
+    if len(body) > _MAX_RESPONSE_BYTES:
         raise ValueError("Resposta da pesquisa ultrapassou o limite permitido.")
+
     parser = _Results()
     parser.feed(body.decode("utf-8", errors="replace"))
     unique: list[dict[str, str]] = []
@@ -100,7 +110,7 @@ def discover_sites(query: str, *, limit: int = 10) -> dict:
             break
     return {
         "query": query.strip(),
-        "source": "DuckDuckGo HTML public search",
+        "source": "DuckDuckGo Lite public search",
         "candidate_count": len(unique),
         "candidates": unique,
         "important": "Somente resultados de pesquisa pública. Nenhum site encontrado foi acessado ou testado. Confirme a propriedade/autorização antes de executar auditorias.",
