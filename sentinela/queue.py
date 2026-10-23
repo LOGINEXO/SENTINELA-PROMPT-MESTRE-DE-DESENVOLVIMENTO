@@ -190,3 +190,12 @@ def finish(job_id: int, *, result: Any = None, error: str | None = None) -> None
             (final_status, utc_now(), encoded, final_error, job_id),
         )
         db.commit()
+
+
+def get_job(job_id: int) -> dict[str, Any] | None:
+    """Return one queue job by ID, including its structured result when available."""
+    if isinstance(job_id, bool) or not isinstance(job_id, int) or job_id < 1:
+        raise QueueError("O ID da tarefa deve ser um inteiro positivo.")
+    with connect() as db:
+        row = db.execute("SELECT * FROM queue_jobs WHERE id=?", (job_id,)).fetchone()
+    return serialize_job(row) if row is not None else None
