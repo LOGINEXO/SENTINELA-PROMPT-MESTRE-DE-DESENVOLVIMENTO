@@ -78,6 +78,18 @@ class NVDTests(unittest.TestCase):
     def test_network_failure_is_wrapped(self, _mock):
         with self.assertRaisesRegex(NVDClientError, "rede"): search_cves("test")
 
+    @patch("sentinela.intelligence.nvd.urlopen", side_effect=TimeoutError("timed out"))
+    def test_timeout_is_wrapped(self, _mock):
+        with self.assertRaisesRegex(NVDClientError, "tempo esgotado"): search_cves("test")
+
+    @patch("sentinela.intelligence.nvd.urlopen", side_effect=HTTPError("url", 403, "forbidden", {}, None))
+    def test_authentication_failure_has_clear_error(self, _mock):
+        with self.assertRaisesRegex(NVDClientError, "HTTP 403"): search_cves("test")
+
+    @patch("sentinela.intelligence.nvd.urlopen", side_effect=HTTPError("url", 500, "server error", {}, None))
+    def test_server_failure_has_clear_error(self, _mock):
+        with self.assertRaisesRegex(NVDClientError, "HTTP 500"): search_cves("test")
+
     @patch("sentinela.intelligence.nvd.urlopen")
     def test_invalid_json_is_rejected(self, mock_urlopen):
         mock_urlopen.return_value = FakeResponse(b"not-json")
