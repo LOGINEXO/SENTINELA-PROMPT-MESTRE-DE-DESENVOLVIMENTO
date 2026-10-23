@@ -12,7 +12,8 @@ Esta lista prepara o projeto para implantação. Marque cada item somente depois
 
 ## Configuração e segredos
 
-- [ ] Definir `SENTINELA_WEB_USERNAME` e `SENTINELA_WEB_PASSWORD` no ambiente do processo PHP; senha exclusiva com 16+ caracteres.
+- [ ] Para uso local, confirmar que `SENTINELA_LOCAL_MODE=1` só é usado com o servidor PHP ligado a `127.0.0.1`/`::1`, sem proxy ou túnel.
+- [ ] Para hospedagem, manter `SENTINELA_LOCAL_MODE` desativado e definir `SENTINELA_WEB_USERNAME` e `SENTINELA_WEB_PASSWORD`; senha exclusiva com 16+ caracteres.
 - [ ] Confirmar que credenciais ausentes/curtas fazem o painel falhar fechado com HTTP 503.
 - [ ] Confirmar que credenciais incorretas recebem HTTP 401 e credenciais válidas permitem acesso.
 - [ ] Não armazenar segredos em arquivos versionados, no diretório público ou nos logs.
@@ -31,7 +32,8 @@ Esta lista prepara o projeto para implantação. Marque cada item somente depois
 
 ## Teste de aceitação
 
-- [ ] Abrir o painel sem credenciais e confirmar HTTP 401 quando o ambiente está configurado.
+- [ ] Em modo local, confirmar que a interface abre sem senha apenas via loopback.
+- [ ] Em hospedagem, abrir o painel sem credenciais e confirmar HTTP 401 quando o ambiente está configurado.
 - [ ] Configurar credenciais ausentes e confirmar HTTP 503.
 - [ ] Testar CSRF inválido e confirmar HTTP 403.
 - [ ] Enfileirar apenas uma consulta NVD de teste e confirmar seu estado na fila.
