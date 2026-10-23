@@ -1,6 +1,6 @@
 # Etapa 7 — Fila e controles PLAY / PAUSE / STOP
 
-A fila usa SQLite persistente (por padrão `reports/queue.sqlite3`, ignorado pelo Git). São aceitos somente dois tipos de tarefa: consulta pública NVD por palavra-chave e auditoria passiva HTTPS para hostname na allowlist. Não há execução arbitrária de comandos, varredura de portas, exploração ou envio de e-mails. Rascunhos editáveis e não enviados são tratados na Etapa 8; consulte `docs/email-drafts.md`.
+A fila usa SQLite persistente (por padrão `reports/queue.sqlite3`, ignorado pelo Git). São aceitos consulta pública NVD, auditoria passiva HTTPS e verificação ativa HTTPS limitada. A tarefa ativa exige uma allowlist separada e confirmação explícita. Não há execução arbitrária de comandos, varredura de portas, exploração ou envio de e-mails. A verificação ativa executa um único GET HTTPS à raiz; veja `docs/active-audit.md`. Rascunhos editáveis e não enviados são tratados na Etapa 8; consulte `docs/email-drafts.md`.
 
 ## Iniciar o worker
 
@@ -17,6 +17,7 @@ O worker fica aguardando tarefas e respeita o estado global da fila. Para encerr
 ```bash
 python -m sentinela.queue_cli add-nvd --query "OpenSSH" --limit 10
 python -m sentinela.queue_cli add-audit --host "app.minha-empresa.example"
+python -m sentinela.queue_cli add-active-audit --host "app.minha-empresa.example" --confirm-authorized
 python -m sentinela.queue_cli status
 python -m sentinela.queue_cli control pause
 python -m sentinela.queue_cli control play
