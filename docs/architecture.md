@@ -1,5 +1,9 @@
 # Arquitetura do Sentinela
 
+## Modelo de execução e armazenamento
+
+O Sentinela é um aplicativo open source local-first, não um serviço hospedado. Não possui login, contas, backend central ou sincronização. Cada instalação grava a fila e o histórico em `reports/queue.sqlite3`, relatórios em `reports/` e rascunhos em `reports/email-drafts/` no computador local. A interface PHP aceita somente conexões de loopback. A rede é usada para consultar a API pública NVD e para conectar-se aos ativos explicitamente autorizados; relatórios não são enviados para um servidor central.
+
 ## Estado das etapas
 
 - Etapa 1 — Fundação: concluída.
@@ -42,7 +46,7 @@ Configurações locais, escopo real, credenciais e relatórios não devem ser ve
 
 ## Etapa 6 — Interface PHP
 
-A interface pública está em `web/`. Ela chama a CLI Python com argumentos separados (sem shell), valida entradas, verifica a allowlist antes da auditoria, usa token CSRF e escapa saídas HTML. O document root deve apontar exclusivamente para `web/`; o escopo real e os relatórios devem permanecer fora da raiz pública. A interface é síncrona e não fornece fila, pausa ou cancelamento; não deve ser exposta publicamente sem autenticação e controles operacionais adicionais. Consulte `docs/php-interface.md`.
+A interface local está em `web/`. Ela chama a CLI Python com argumentos separados (sem shell), valida entradas, verifica a allowlist antes da auditoria, usa token CSRF e escapa saídas HTML. O acesso é limitado a loopback; não é um painel hospedado e não deve ser exposto à rede. Consulte `docs/php-interface.md`.
 
 
 ## Etapa 7 — Fila persistente
