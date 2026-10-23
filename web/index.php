@@ -139,6 +139,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $notice = 'Consulta NVD adicionada à fila.';
                 }
             }
+        } elseif ($action === 'discover') {
+            $query = trim(is_string($_POST['query'] ?? null) ? $_POST['query'] : '');
+            $limit = is_string($_POST['limit'] ?? null) ? $_POST['limit'] : '10';
+            if ($query === '' || strlen($query) > 120 || preg_match('/[\\x00-\\x1F\\x7F]/', $query)) {
+                $error = 'Informe um nicho ou palavra-chave válida (até 120 caracteres).';
+            } elseif (!ctype_digit($limit) || (int)$limit < 1 || (int)$limit > 10) {
+                $error = 'O limite de descoberta deve ficar entre 1 e 10 sites.';
+            } else {
+                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.discovery', '--query', $query, '--limit', (string)(int)$limit]);
+                if ($code !== 0) {
+                    $error = 'Não foi possível pesquisar sites públicos. ' . trim($stderr);
+                } else {
+                    $result = $stdout;
+                    $notice = 'Descoberta concluída. Os resultados são candidatos; nenhum site foi acessado ou testado.';
+                }
+            }
         } elseif ($action === 'audit') {
             $host = strtolower(trim(is_string($_POST['host'] ?? null) ? $_POST['host'] : ''));
             if ($host === '' || strlen($host) > 253 || !preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/D', $host)) {
@@ -270,6 +286,24 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <?php endforeach; ?>
 </select>
 <button type="submit">Consultar NVD</button>
+</form>
+</section>
+
+<section class="panel">
+<h2>Descobrir sites por nicho</h2>
+<p>Pesquisa resultados públicos para termos como imobiliária, corretora ou e-commerce. Esta etapa apenas lista candidatos: não acessa os sites nem testa vulnerabilidades. Auditorias posteriores exigem autorização do proprietário.</p>
+<form method="post">
+<input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+<input type="hidden" name="action" value="discover">
+<label for="discover-query">Nicho ou palavra-chave</label>
+<input id="discover-query" name="query" maxlength="120" required value="<?= e($action === 'discover' ? $query : '') ?>" placeholder="Ex.: imobiliárias no Brasil">
+<label for="discover-limit">Máximo de sites encontrados</label>
+<select id="discover-limit" name="limit">
+<?php foreach ([5,10] as $option): ?>
+<option value="<?= $option ?>" <?= (int)$limit === $option ? 'selected' : '' ?>><?= $option ?></option>
+<?php endforeach; ?>
+</select>
+<button type="submit">Pesquisar sites na internet</button>
 </form>
 </section>
 
