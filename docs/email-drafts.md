@@ -16,7 +16,7 @@ python -m sentinela.queue_cli status
 python -m sentinela.email_drafts --job-id 12
 ```
 
-Substitua `12` por um ID real. O arquivo será criado em `reports/email-drafts/job-12.md`. Somente tarefas concluídas de consulta NVD ou auditoria passiva são aceitas. Gerar novamente o mesmo ID substitui o arquivo atomicamente.
+Substitua `12` por um ID real. O arquivo será criado em `reports/email-drafts/job-12.md`. Somente tarefas concluídas de consulta NVD, auditoria passiva ou verificação ativa limitada são aceitas. Gerar novamente o mesmo ID substitui o arquivo atomicamente.
 
 ## Revisão antes de compartilhar
 
