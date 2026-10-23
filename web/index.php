@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-[$queueCode, $queueStdout, $queueStderr] = run_cli(['-m', 'sentinela.queue_cli', 'status', '--limit', '50']);
+[$queueCode, $queueStdout, $queueStderr] = run_cli(['-m', 'sentinela.queue_cli', 'status', '--limit', '10']);
 if ($queueCode === 0) {
     $decoded = json_decode($queueStdout, true);
     if (is_array($decoded)) {
