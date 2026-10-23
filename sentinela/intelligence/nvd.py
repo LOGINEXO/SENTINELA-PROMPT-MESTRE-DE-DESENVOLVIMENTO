@@ -16,7 +16,7 @@ from urllib.request import Request, urlopen
 API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 DEFAULT_TIMEOUT_SECONDS = 10
 MAX_RESULTS = 100
-_CVE_ID = re.compile(r"^CVE-\\d{4}-\\d{4,}$", re.IGNORECASE)
+_CVE_ID = re.compile(r"^CVE-\d{4}-\\d{4,}$", re.IGNORECASE)
 
 
 class NVDClientError(RuntimeError):
