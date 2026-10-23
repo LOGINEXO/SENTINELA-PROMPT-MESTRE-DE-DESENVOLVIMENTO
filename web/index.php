@@ -179,7 +179,7 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
 <input type="hidden" name="action" value="audit">
 <label for="host">Hostname autorizado</label>
-<input id="host" name="host" maxlength="253" required pattern="(?i)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*" value="<?= e($action === 'audit' ? $host : '') ?>" placeholder="app.minha-empresa.com">
+<input id="host" name="host" maxlength="253" required value="<?= e($action === 'audit' ? $host : '') ?>" placeholder="app.minha-empresa.com">
 <button type="submit">Executar auditoria passiva</button>
 </form>
 </section>
