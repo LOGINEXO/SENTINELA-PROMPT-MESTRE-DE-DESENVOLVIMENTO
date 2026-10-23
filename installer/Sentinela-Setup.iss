@@ -34,7 +34,7 @@ Source: "LEIA-ME.txt"; DestDir: "{app}"; Flags: ignoreversion
 Name: "desktopicon"; Description: "Criar atalho na área de trabalho"; GroupDescription: "Atalhos:"; Flags: unchecked
 
 [Icons]
-Name: "{autoprograms}\Sentinela\Instalar / reparar dependências"; Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-sentinela.ps1"""; WorkingDir: "{app}"
+Name: "{autoprograms}\Sentinela\Instalar e reparar dependências"; Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\install-sentinela.ps1"""; WorkingDir: "{app}"
 Name: "{autoprograms}\Sentinela\Abrir Sentinela"; Filename: "powershell.exe"; Parameters: "-NoExit -NoProfile -ExecutionPolicy Bypass -File ""{app}\start-sentinela.ps1"""; WorkingDir: "{app}"
 Name: "{autodesktop}\Sentinela"; Filename: "powershell.exe"; Parameters: "-NoExit -NoProfile -ExecutionPolicy Bypass -File ""{app}\start-sentinela.ps1"""; WorkingDir: "{app}"; Tasks: desktopicon
 
