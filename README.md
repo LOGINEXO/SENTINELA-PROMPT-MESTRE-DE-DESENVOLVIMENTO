@@ -1,6 +1,6 @@
 # Sentinela
 
-Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–7: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo, interface PHP e fila persistente.
+Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–8: fundação, inteligência pública, relatórios JSON, auditoria passiva, controles de escopo, interface PHP, fila persistente e rascunhos de e-mail.
 
 ## Requisitos
 
@@ -94,7 +94,7 @@ Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit
 
 A interface web fica em `web/index.php`. Configure o document root do servidor web **somente** para `web/`; mantenha o repositório, o escopo real e os relatórios fora da raiz pública. Requer PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Para desenvolvimento local, execute na raiz do projeto `php -S 127.0.0.1:8080 -t web` e abra `http://127.0.0.1:8080`. Configure `SENTINELA_PYTHON` se o processo PHP não localizar o interpretador correto.
 
-A interface enfileira consultas NVD e auditorias passivas autorizadas, e exibe o histórico e controles PLAY/PAUSE/STOP. Consulte [docs/php-interface.md](docs/php-interface.md) e [docs/queue-controls.md](docs/queue-controls.md).
+A interface enfileira consultas NVD e auditorias passivas autorizadas, exibe histórico e controles PLAY/PAUSE/STOP e permite gerar rascunhos de e-mail para revisão manual. Consulte [docs/php-interface.md](docs/php-interface.md), [docs/queue-controls.md](docs/queue-controls.md) e [docs/email-drafts.md](docs/email-drafts.md).
 
 ## Relatórios JSON
 
@@ -114,11 +114,11 @@ Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A san
 - [x] 5 — Controles de escopo e mitigação de SSRF/DNS rebinding.
 - [x] 6 — Interface PHP (síncrona; sem fila).
 - [x] 7 — Fila persistente e controles PLAY/PAUSE/STOP.
-- [ ] 8 — Rascunhos de e-mail e revisão manual.
+- [x] 8 — Rascunhos de e-mail e revisão manual.
 - [ ] 9 — Testes ativos autorizados.
 - [ ] 10 — Revisão e publicação.
 
-Inteligência pública não concede autorização para testar ativos. Etapas futuras de auditoria ativa exigirão escopo e autorização explícitos. Não há exploração, varredura de portas nem envio automático de e-mails nesta etapa.
+Inteligência pública não concede autorização para testar ativos. Etapas futuras de auditoria ativa exigirão escopo e autorização explícitos. Não há exploração, varredura de portas nem envio automático de e-mails. Os rascunhos são arquivos Markdown locais e exigem revisão humana.
 
 ## Estrutura e políticas
 
@@ -127,6 +127,7 @@ Inteligência pública não concede autorização para testar ativos. Etapas fut
 - `sentinela/scope.py`: allowlist, resolução DNS e validação de destinos de redirecionamento.
 - `sentinela/reports.py`: formato, sanitização e exportação JSON.
 - `sentinela/queue.py`, `sentinela/queue_worker.py`, `sentinela/queue_cli.py`: fila SQLite, worker e controles.
+- `sentinela/email_drafts.py`: geração de rascunhos de e-mail não enviados para revisão manual.
 - `config/`: configurações e exemplos de escopo.
 - `tests/`: testes automatizados offline.
 - `reports/`: relatórios locais ignorados pelo Git.
