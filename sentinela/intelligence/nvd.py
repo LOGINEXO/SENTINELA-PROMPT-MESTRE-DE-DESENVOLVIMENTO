@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-API_URL = "https://services.nist.gov/rest/json/cves/2.0"
+API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 DEFAULT_TIMEOUT_SECONDS = 10
 MAX_RESULTS = 100
 _CVE_ID = re.compile(r"^CVE-\\d{4}-\\d{4,}$", re.IGNORECASE)
