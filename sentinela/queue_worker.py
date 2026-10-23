@@ -11,6 +11,7 @@ from sentinela.intelligence.nvd import search_cves
 from sentinela.reports import build_report
 from sentinela.scope import load_scope
 from sentinela.audit.passive import audit_https
+from sentinela.audit.active import audit_https_get
 
 
 def execute(job: dict) -> dict:
@@ -25,6 +26,15 @@ def execute(job: dict) -> dict:
         allowed_hosts = load_scope(scope_path)
         result = audit_https(payload["host"], allowed_hosts=allowed_hosts)
         return build_report([result], source="passive-https-audit")
+    if job["task_type"] == "active_audit":
+        if payload.get("confirm_authorized") is not True:
+            raise ValueError("Confirmação explícita de autorização ausente.")
+        scope_path = Path(__import__("os").environ.get("SENTINELA_ACTIVE_SCOPE_FILE", ROOT / "config" / "authorized_active_targets.txt"))
+        if not scope_path.is_absolute():
+            scope_path = ROOT / scope_path
+        allowed_hosts = load_scope(scope_path)
+        result = audit_https_get(payload["host"], allowed_hosts=allowed_hosts)
+        return build_report([result], source="authorized-active-https-check")
     raise ValueError("Tipo de tarefa não permitido.")
 
 
