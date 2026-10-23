@@ -65,7 +65,9 @@ def test_active_check_pins_public_ip_and_discards_bounded_response(monkeypatch):
 
 def test_active_check_rejects_tls_verification_failure(monkeypatch):
     monkeypatch.setattr(active, "_resolve_public_addresses", lambda _host: ["8.8.8.8"])
-    monkeypatch.setattr(active.socket, "create_connection", lambda *_a, **_k: object())
+    class FakeRaw:
+        def close(self): pass
+    monkeypatch.setattr(active.socket, "create_connection", lambda *_a, **_k: FakeRaw())
     class Context:
         def wrap_socket(self, *_a, **_k):
             raise ssl.SSLCertVerificationError("private details")
