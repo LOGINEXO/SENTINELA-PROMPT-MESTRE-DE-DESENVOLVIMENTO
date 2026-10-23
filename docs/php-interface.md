@@ -1,6 +1,6 @@
 # Etapa 6 — Interface PHP
 
-A interface em `web/index.php` oferece consulta pública NVD/CVE e auditoria passiva HTTPS de hostname previamente autorizado, enfileirando essas tarefas em SQLite. O painel exibe o estado, o histórico e os controles PLAY/PAUSE/STOP. O processo worker deve ser iniciado separadamente conforme `docs/queue-controls.md`.
+A interface em `web/index.php` oferece consulta pública NVD/CVE e auditoria passiva HTTPS de hostname previamente autorizado, enfileirando essas tarefas em SQLite. O painel exibe o estado, o histórico e os controles PLAY/PAUSE/STOP. Para tarefas concluídas, é possível gerar um rascunho de e-mail local, que não é enviado automaticamente. O processo worker deve ser iniciado separadamente conforme `docs/queue-controls.md`.
 
 ## Requisitos
 
@@ -33,4 +33,4 @@ Se o executável Python não for encontrado pelo processo PHP, configure a vari�
 
 ## Limitações operacionais
 
-A inclusão de tarefas e os controles são comandos curtos, mas a execução acontece em processo worker separado. Não publique esta interface sem autenticação/autorização de acesso, limites no servidor web, timeout de processo e monitoramento. A fila não substitui autenticação. Configure TLS no servidor web quando acessar remotamente. Não mantenha relatórios, escopo real, segredos ou a raiz do repositório sob o document root público.
+A inclusão de tarefas e os controles são comandos curtos, mas a execução acontece em processo worker separado. Não publique esta interface sem autenticação/autorização de acesso, limites no servidor web, timeout de processo e monitoramento. A fila não substitui autenticação. Os rascunhos ficam em `reports/email-drafts/`; confira `docs/email-drafts.md` e revise manualmente destinatários e conteúdo. Configure TLS no servidor web quando acessar remotamente. Não mantenha relatórios, escopo real, segredos ou a raiz do repositório sob o document root público.

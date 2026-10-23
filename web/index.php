@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Sentinela web interface (Stage 6).
+ * Sentinela web interface (Stages 6–8).
  * Configure the web server document root to this /web directory and keep the
  * repository root, local allowlist, environment files and reports outside it.
  */
@@ -122,6 +122,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Não foi possível enfileirar a auditoria. ' . trim($stderr);
                 } else {
                     $notice = 'Auditoria passiva adicionada à fila.';
+                }
+            }
+        } elseif ($action === 'email_draft') {
+            $jobId = is_string($_POST['job_id'] ?? null) ? $_POST['job_id'] : '';
+            if (!ctype_digit($jobId) || (int)$jobId < 1) {
+                $error = 'ID de tarefa inválido para gerar rascunho.';
+            } else {
+                [$code, $stdout, $stderr] = run_cli(['-m', 'sentinela.email_drafts', '--job-id', (string)(int)$jobId]);
+                if ($code !== 0) {
+                    $error = 'Não foi possível gerar o rascunho. ' . trim($stderr);
+                } else {
+                    $draftResult = json_decode($stdout, true);
+                    if (is_array($draftResult) && ($draftResult['status'] ?? '') === 'draft_created_not_sent') {
+                        $notice = 'Rascunho criado para revisão manual (NÃO enviado): ' . (string)($draftResult['path'] ?? '');
+                    } else {
+                        $error = 'O gerador não confirmou a criação do rascunho.';
+                    }
                 }
             }
         } elseif (in_array($action, ['play', 'pause', 'stop'], true)) {
@@ -248,6 +265,14 @@ label{display:block;font-weight:650;margin:14px 0 6px}input,select,button{width:
 <td style="padding:8px;border-top:1px solid var(--line)"><?= e((string)$job['created_at']) ?></td>
 <td style="padding:8px;border-top:1px solid var(--line)">
 <?php if (!empty($job['error'])): ?><?= e((string)$job['error']) ?><?php elseif (isset($job['result'])): ?><details><summary>Ver resultado</summary><pre><?= e(json_encode($job['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '') ?></pre></details><?php else: ?>—<?php endif; ?>
+<?php if (($job['status'] ?? '') === 'completed' && in_array(($job['task_type'] ?? ''), ['nvd_search', 'passive_audit'], true)): ?>
+<form method="post" style="min-width:180px">
+<input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+<input type="hidden" name="action" value="email_draft">
+<input type="hidden" name="job_id" value="<?= (int)$job['id'] ?>">
+<button type="submit">Gerar rascunho de e-mail</button>
+</form>
+<?php endif; ?>
 </td>
 </tr>
 <?php endforeach; ?>

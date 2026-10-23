@@ -1,6 +1,6 @@
 # Etapa 7 — Fila e controles PLAY / PAUSE / STOP
 
-A fila usa SQLite persistente (por padrão `reports/queue.sqlite3`, ignorado pelo Git). São aceitos somente dois tipos de tarefa: consulta pública NVD por palavra-chave e auditoria passiva HTTPS para hostname na allowlist. Não há execução arbitrária de comandos, varredura de portas, exploração ou envio de e-mails.
+A fila usa SQLite persistente (por padrão `reports/queue.sqlite3`, ignorado pelo Git). São aceitos somente dois tipos de tarefa: consulta pública NVD por palavra-chave e auditoria passiva HTTPS para hostname na allowlist. Não há execução arbitrária de comandos, varredura de portas, exploração ou envio de e-mails. Rascunhos editáveis e não enviados são tratados na Etapa 8; consulte `docs/email-drafts.md`.
 
 ## Iniciar o worker
 

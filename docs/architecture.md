@@ -9,7 +9,8 @@
 - Etapa 5 — Escopo explícito e proteção de destinos: implementada.
 - Etapa 6 — Interface PHP: implementada.
 - Etapa 7 — Fila SQLite e controles cooperativos PLAY/PAUSE/STOP: implementada nesta branch, aguardando validação do CI.
-- Etapas 8–10: planejadas, não implementadas.
+- Etapa 8 — Rascunhos de e-mail em Markdown para revisão manual, sem envio automático: implementada nesta branch, aguardando validação do CI.
+- Etapas 9–10: planejadas, não implementadas.
 
 ## Etapa 5 — Escopo e controles de destino
 
