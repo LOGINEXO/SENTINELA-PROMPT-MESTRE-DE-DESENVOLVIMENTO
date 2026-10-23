@@ -18,40 +18,14 @@ header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
 
-// Local open-source use is simple, but the unauthenticated mode is loopback-only.
-// Never enable SENTINELA_LOCAL_MODE behind a reverse proxy or on a network-facing server.
-$localMode = getenv('SENTINELA_LOCAL_MODE') === '1';
+// Sentinela is a local-only application: no accounts, login system, or hosted data service.
 $remoteAddress = $_SERVER['REMOTE_ADDR'] ?? '';
 $isLoopback = in_array($remoteAddress, ['127.0.0.1', '::1'], true);
 $hasForwardedHeaders = isset($_SERVER['HTTP_FORWARDED']) || isset($_SERVER['HTTP_X_FORWARDED_FOR']);
-
-if ($localMode && $isLoopback && !$hasForwardedHeaders) {
-    // Intended for the built-in PHP server bound to 127.0.0.1 or ::1.
-} else {
-    $webUsername = getenv('SENTINELA_WEB_USERNAME');
-    $webPassword = getenv('SENTINELA_WEB_PASSWORD');
-    if (
-        $webUsername === false || $webUsername === '' ||
-        $webPassword === false || strlen($webPassword) < 16
-    ) {
-        http_response_code(503);
-        echo 'Painel indisponível: configure SENTINELA_WEB_USERNAME e SENTINELA_WEB_PASSWORD (mínimo de 16 caracteres), ou use o modo local somente em loopback.';
-        exit;
-    }
-
-    $providedUsername = $_SERVER['PHP_AUTH_USER'] ?? null;
-    $providedPassword = $_SERVER['PHP_AUTH_PW'] ?? null;
-    if (
-        !is_string($providedUsername) ||
-        !is_string($providedPassword) ||
-        !hash_equals($webUsername, $providedUsername) ||
-        !hash_equals($webPassword, $providedPassword)
-    ) {
-        header('WWW-Authenticate: Basic realm="Sentinela", charset="UTF-8"');
-        http_response_code(401);
-        echo 'Autenticação necessária.';
-        exit;
-    }
+if (!$isLoopback || $hasForwardedHeaders) {
+    http_response_code(403);
+    echo 'O Sentinela funciona apenas localmente. Inicie o servidor ligado a 127.0.0.1 e não use proxy, túnel ou publicação na rede.';
+    exit;
 }
 
 if (!isset($_SESSION['csrf_token'])) {
