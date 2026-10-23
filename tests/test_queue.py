@@ -87,7 +87,7 @@ def test_active_audit_requires_separate_allowlist_and_confirmation(tmp_path, mon
 def test_site_crawl_requires_passive_allowlist_and_bounds_pages(tmp_path, monkeypatch):
     monkeypatch.setenv("SENTINELA_QUEUE_DB", str(tmp_path / "queue.sqlite3"))
     scope = tmp_path / "scope.txt"
-    scope.write_text("example.com\\n", encoding="utf-8")
+    scope.write_text("example.com\n", encoding="utf-8")
     monkeypatch.setenv("SENTINELA_SCOPE_FILE", str(scope))
     job = queue.enqueue("site_crawl", {"host": "example.com", "max_pages": 5})
     assert job["task_type"] == "site_crawl"
