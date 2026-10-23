@@ -121,10 +121,17 @@ def serialize_job(row: sqlite3.Row) -> dict[str, Any]:
     item = dict(row)
     item["payload"] = json.loads(item.pop("payload_json"))
     if item.get("result_json"):
-        try:
-            item["result"] = json.loads(item["result_json"])
-        except json.JSONDecodeError:
-            item["result"] = item["result_json"]
+        if len(item["result_json"]) > 8000:
+            item["result"] = {
+                "truncated": True,
+                "preview": item["result_json"][:8000],
+                "note": "Resultado reduzido para exibição no histórico; o relatório completo permanece no banco local."
+            }
+        else:
+            try:
+                item["result"] = json.loads(item["result_json"])
+            except json.JSONDecodeError:
+                item["result"] = item["result_json"]
     item.pop("result_json", None)
     return item
 
