@@ -3,8 +3,8 @@
 ## Controles implementados
 
 - Não adicionar tokens, senhas, chaves privadas, cookies ou configurações locais ao Git.
-- Painel PHP protegido por HTTP Basic Auth; falha fechada (HTTP 503) se as credenciais não estiverem configuradas ou a senha tiver menos de 16 caracteres.
-- Exigir HTTPS/TLS para acesso remoto ao painel; limitar o servidor PHP embutido a loopback para desenvolvimento.
+- Para uso local, o painel pode funcionar sem senha somente com `SENTINELA_LOCAL_MODE=1`, conexão loopback e sem cabeçalhos de proxy. Para hospedagem/acesso remoto, HTTP Basic Auth é obrigatório; o painel falha fechada (HTTP 503) se as credenciais não estiverem configuradas ou a senha tiver menos de 16 caracteres.
+- Exigir HTTPS/TLS para acesso remoto ao painel; manter o servidor PHP embutido ligado a `127.0.0.1` no modo local e nunca expor o modo local por proxy, túnel ou interface de rede.
 - Manter relatórios, banco SQLite, arquivos de escopo reais e arquivos de ambiente fora da raiz pública do servidor web.
 - Não tratar descoberta pública como autorização de teste.
 - Auditoria passiva exige allowlist exata; verificação ativa exige allowlist separada e confirmação explícita.
