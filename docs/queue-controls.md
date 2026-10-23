@@ -1,6 +1,6 @@
 # Etapa 7 — Fila e controles PLAY / PAUSE / STOP
 
-A fila usa SQLite persistente (por padrão `reports/queue.sqlite3`, ignorado pelo Git). São aceitos consulta pública NVD, auditoria passiva HTTPS e verificação ativa HTTPS limitada. A tarefa ativa exige uma allowlist separada e confirmação explícita. Não há execução arbitrária de comandos, varredura de portas, exploração ou envio de e-mails. A verificação ativa executa um único GET HTTPS à raiz; veja `docs/active-audit.md`. Rascunhos editáveis e não enviados são tratados na Etapa 8; consulte `docs/email-drafts.md`.
+A fila usa SQLite persistente local (por padrão `reports/queue.sqlite3`, ignorado pelo Git), no computador onde a cópia do Sentinela está sendo executada. Cada computador mantém seu próprio banco e histórico; não há sincronização central. São aceitos consulta pública NVD, auditoria passiva HTTPS e verificação ativa HTTPS limitada. A tarefa ativa exige uma allowlist separada e confirmação explícita. Não há execução arbitrária de comandos, varredura de portas, exploração ou envio de e-mails. A verificação ativa executa um único GET HTTPS à raiz; veja `docs/active-audit.md`. Rascunhos editáveis e não enviados são tratados na Etapa 8; consulte `docs/email-drafts.md`.
 
 ## Iniciar o worker
 
@@ -28,7 +28,7 @@ O modo inicial da fila é PLAY. PAUSE impede que novas tarefas comecem; a tarefa
 
 ## Interface PHP
 
-O painel em `web/index.php` passa a enfileirar as duas ações e exibir o estado/histórico. Os botões PLAY, PAUSE e STOP alteram o estado persistente da fila; o worker precisa estar ativo em um processo separado para consumir tarefas. Proteja o painel com autenticação antes de disponibilizá-lo a outras pessoas. A base SQLite contém resultados e deve permanecer fora da raiz pública e ser protegida por permissões do sistema operacional.
+O painel em `web/index.php` passa a enfileirar as duas ações e exibir o estado/histórico. Os botões PLAY, PAUSE e STOP alteram o estado persistente da fila; o worker precisa estar ativo em um processo separado para consumir tarefas. O painel é exclusivamente local e não possui login. Não o disponibilize a outras pessoas pela rede. A base SQLite contém resultados locais e deve ser protegida pelas permissões normais do sistema operacional.
 
 ## Limitações
 
