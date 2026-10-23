@@ -1,18 +1,13 @@
 # Sentinela
 
-Plataforma modular de inteligência pública e auditoria defensiva de segurança. A **Etapa 1 — Fundação** foi validada no GitHub Actions; a **Etapa 2 — Inteligência pública** implementa consultas explícitas à API NVD/CVE 2.0. Não há scanner de ativos nesta etapa.
+Plataforma modular de inteligência pública e auditoria defensiva. Etapas 1–4 concluídas; a Etapa 5 adiciona escopo explícito e controles de destino para a auditoria passiva.
 
 ## Requisitos
 
-- Python 3.11 ou superior
-- Git
-- pip
-
-O motor usa a biblioteca padrão do Python. pytest é usado nos testes. A rede só é acessada quando uma consulta NVD é solicitada explicitamente pela CLI.
+- Python 3.11+
+- Git e pip
 
 ## Instalação
-
-Crie e ative um ambiente virtual.
 
 Linux/macOS:
 
@@ -39,65 +34,98 @@ python -m sentinela.cli --check-config
 python -m pytest -q
 ~~~
 
-## Consultar inteligência pública NVD/CVE
-
-Busca por palavra-chave (consulta a API oficial; exige conectividade com a internet):
+## Consultas públicas NVD/CVE
 
 ~~~bash
 python -m sentinela.cli --nvd-search "OpenSSH" --limit 10
 python -m sentinela.cli --nvd-search "OpenSSH" --modified-since "2026-10-01T00:00:00Z"
-~~~
-
-Consultar um CVE específico:
-
-~~~bash
 python -m sentinela.cli --nvd-cve CVE-2024-3094
 ~~~
 
-Opcionalmente, defina NVD_API_KEY no ambiente para autenticar as consultas e receber a cota aplicável à chave. Não coloque a chave em arquivos versionados. Sem chave, a NVD pode aplicar limites mais restritos. O cliente usa timeout, limita a consulta a 100 resultados, informa erros de rede/limite e não repete requisições automaticamente.
+As consultas NVD só são feitas quando solicitadas explicitamente. A variável opcional `NVD_API_KEY` deve ser definida no ambiente, nunca em arquivos versionados. As buscas incrementais aceitam datas ISO 8601 com fuso, em uma janela máxima de 120 dias. Um CVE público não confirma que um ativo específico esteja vulnerável.
 
-A busca incremental aceita --modified-since e --modified-until com datas ISO 8601 e fuso horário; a janela máxima é de 120 dias conforme as regras da NVD. Os resultados normalizados incluem CVE, descrição, datas, estado, CVSS quando disponível, faixa de prioridade técnica derivada do CVSS, produtos/intervalos afetados indicados pela NVD e referências. Um indicador público **não comprova** que um site específico seja vulnerável: asset_confirmed permanece false e validation_status é new_public_indicator.
+## Etapa 4 — Auditoria passiva com escopo obrigatório
 
-## Estrutura
+**A auditoria não roda sem uma allowlist local preenchida manualmente.** Copie o arquivo de exemplo e adicione apenas hostnames para os quais você tem autorização documentada.
 
-- **sentinela/**: pacote Python e CLI.
-- **sentinela/intelligence/nvd.py**: cliente e normalizador da API NVD 2.0.
-- **config/**: exemplos de configuração e escopo autorizado.
-- **tests/**: testes automatizados, incluindo respostas NVD simuladas sem chamadas externas.
-- **docs/**: arquitetura, instalação e políticas de segurança.
-- **reports/**: diretório reservado para relatórios locais.
-- **.github/workflows/tests.yml**: testes automatizados no GitHub Actions.
+Linux/macOS:
 
-## Etapas do projeto
+~~~bash
+cp config/authorized_targets.example.txt config/authorized_targets.txt
+~~~
 
-- [x] Etapa 1 — Fundação: estrutura, configuração, documentação, testes básicos e CI validado.
-- [x] Etapa 2 — Inteligência pública: cliente NVD/CVE, normalização, busca incremental, classificação técnica, tratamento de erros e testes simulados; CI validado.
-- [ ] Etapa 3 — Relatórios locais.
-- [ ] Etapa 4 — Auditoria passiva.
-- [ ] Etapa 5 — Controle de escopo e mitigação de SSRF/DNS rebinding.
-- [ ] Etapa 6 — Interface PHP.
-- [ ] Etapa 7 — Fila e controles PLAY/PAUSE/STOP.
-- [ ] Etapa 8 — Rascunhos de e-mail e revisão manual.
-- [ ] Etapa 9 — Testes ativos autorizados.
-- [ ] Etapa 10 — Revisão e publicação.
+Windows PowerShell:
 
-Cada etapa será implementada e validada separadamente. Não há consulta automática contínua, exploração de alvos, auditoria de sites nem envio de e-mails nesta etapa.
+~~~powershell
+Copy-Item config/authorized_targets.example.txt config/authorized_targets.txt
+~~~
 
-## Princípios de segurança
+Edite `config/authorized_targets.txt`, acrescente um hostname por linha e remova/comente os exemplos que não forem seus. O arquivo real é ignorado pelo Git.
 
-- Inteligência pública não concede autorização para testar um ativo.
-- Testes ativos futuros exigirão escopo e autorização explícitos.
-- Não armazene segredos, tokens, cookies de sessão ou respostas completas potencialmente sensíveis.
-- Mantenha configurações privadas e relatórios fora da raiz pública de qualquer servidor.
-- Não execute verificações contra sistemas de terceiros sem autorização válida.
-- Arquivos de exemplo são modelos e não concedem autorização.
+~~~text
+# Somente ativos explicitamente autorizados
+meu-dominio.example
+app.minha-empresa.example
+~~~
 
-Consulte docs/architecture.md, docs/installation.md, docs/security.md e docs/responsible-disclosure.md.
+Os nomes acima são exemplos ilustrativos, não autorização real. O arquivo de exemplo do repositório não autoriza nenhum alvo.
 
-## Configuração
+Execute a auditoria apenas contra um hostname presente no arquivo local:
 
-.env.example e config/settings.example.json contêm somente valores de exemplo. A variável opcional NVD_API_KEY deve ser definida fora do repositório.
+~~~bash
+python -m sentinela.audit meu-dominio.example
+python -m sentinela.audit meu-dominio.example --export-json auditoria.json
+~~~
+
+A auditoria envia uma requisição `HEAD` por HTTPS na porta 443, verifica o certificado TLS e registra cabeçalhos de segurança. Não segue redirecionamentos. Não aceita IP literal, curingas, portas alternativas ou URLs com caminhos/credenciais.
+
+## Etapa 5 — Escopo, DNS e redirecionamentos
+
+- A lista de autorização é uma allowlist de hostnames exatos; curingas e subdomínios implícitos são recusados.
+- A execução falha se o arquivo de escopo estiver ausente ou vazio.
+- Todas as respostas DNS precisam ser endereços públicos. Respostas mistas públicas/privadas também são bloqueadas.
+- A conexão usa diretamente um IP público validado, mantendo o hostname original para SNI e validação do certificado TLS.
+- Há uma função para validar destinos de cabeçalho `Location` futuros, mas o programa atual não segue redirecionamentos nem faz requisição ao destino.
+- Esses controles reduzem riscos de SSRF e DNS rebinding; não substituem isolamento de rede, autorização documentada e revisão de segurança.
+
+Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit.md](docs/passive-audit.md).
+
+## Relatórios JSON
+
+~~~bash
+python -m sentinela.audit meu-dominio.example --export-json auditoria.json
+python -m sentinela.cli --nvd-search "OpenSSH" --limit 10 --export-json cves.json
+~~~
+
+Os arquivos são gravados em `reports/`, sanitizados e ignorados pelo Git. A sanitização reduz exposição acidental, mas não substitui a revisão manual antes de compartilhar.
+
+## Etapas
+
+- [x] 1 — Fundação.
+- [x] 2 — Inteligência pública NVD/CVE.
+- [x] 3 — Relatórios locais JSON.
+- [x] 4 — Auditoria passiva HTTPS/TLS.
+- [ ] 5 — Controles de escopo e mitigação de SSRF/DNS rebinding (em validação).
+- [ ] 6 — Interface PHP.
+- [ ] 7 — Fila e controles PLAY/PAUSE/STOP.
+- [ ] 8 — Rascunhos de e-mail e revisão manual.
+- [ ] 9 — Testes ativos autorizados.
+- [ ] 10 — Revisão e publicação.
+
+Inteligência pública não concede autorização para testar ativos. Etapas futuras de auditoria ativa exigirão escopo e autorização explícitos. Não há exploração, varredura de portas nem envio automático de e-mails nesta etapa.
+
+## Estrutura e políticas
+
+- `sentinela/intelligence/nvd.py`: cliente NVD/CVE.
+- `sentinela/audit/`: auditoria HTTPS passiva.
+- `sentinela/scope.py`: allowlist, resolução DNS e validação de destinos de redirecionamento.
+- `sentinela/reports.py`: formato, sanitização e exportação JSON.
+- `config/`: configurações e exemplos de escopo.
+- `tests/`: testes automatizados offline.
+- `reports/`: relatórios locais ignorados pelo Git.
+
+Mantenha configurações privadas, escopo real e relatórios fora da raiz pública de servidores web. Consulte `docs/architecture.md`, `docs/security.md` e `docs/responsible-disclosure.md`.
 
 ## Licença
 
-Licença MIT. Consulte LICENSE.
+MIT. Consulte `LICENSE`.
