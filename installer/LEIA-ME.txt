@@ -1,0 +1,28 @@
+SENTINELA — INSTALADOR PARA WINDOWS E LINUX
+===========================================
+
+WINDOWS
+O instalador grafico Sentinela-Setup.exe e compilado pelo Inno Setup 6 a partir de Sentinela-Setup.iss.
+Este repositorio inclui os fontes do instalador e um workflow do GitHub Actions para gerar o EXE como artefato.
+
+SEM CERTIFICADO DIGITAL
+O EXE pode ser criado sem certificado. Nesse caso, o Windows pode mostrar "Editor desconhecido" ou um aviso do SmartScreen. Isso nao significa automaticamente que seja malware, mas a pessoa deve conferir que baixou o arquivo do repositorio oficial. Nao desative o SmartScreen ou o antivirus para instalar.
+
+INSTALACAO AUTOMATICA
+O assistente instala Python e PHP CLI pelo winget, baixa o codigo-fonte da branch main e executa o instalador do projeto. Requer internet e o App Installer/winget do Windows.
+PHP CLI e instalado pelo pacote PHP.PHP.NTS.8.4. Python usa Python.Python.3.12.
+
+LINUX
+Execute:
+  chmod +x installer/instalar-linux.sh
+  ./installer/instalar-linux.sh
+
+O script suporta Debian/Ubuntu/Mint, Fedora e Arch; outras distribuicoes podem precisar de ajustes.
+
+SEGURANCA
+A interface do Sentinela permanece em http://127.0.0.1:8080. Nao a exponha na rede.
+Use a ferramenta somente em ativos para os quais tenha autorizacao.
+O instalador baixa o conteudo atual da branch main; revise as alteracoes do projeto antes de distribuir o instalador a terceiros.
+
+REPOSITORIO
+https://github.com/LOGINEXO/SENTINELA-PROMPT-MESTRE-DE-DESENVOLVIMENTO
