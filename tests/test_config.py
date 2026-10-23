@@ -37,11 +37,21 @@ def test_non_positive_request_limit_is_rejected(tmp_path):
         load_settings(path)
 
 
+def test_non_finite_timeout_is_rejected(tmp_path):
+    source = ROOT / "config" / "settings.example.json"
+    settings = json.loads(source.read_text(encoding="utf-8"))
+    settings["network"]["timeout_seconds"] = float("nan")
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps(settings), encoding="utf-8")
+    with pytest.raises(ConfigurationError, match="timeout_seconds"):
+        load_settings(path)
+
+
 def test_disabling_authorization_for_active_checks_is_rejected(tmp_path):
     source = ROOT / "config" / "settings.example.json"
     settings = json.loads(source.read_text(encoding="utf-8"))
     settings["authorization"]["required_for_active_checks"] = False
     path = tmp_path / "settings.json"
     path.write_text(json.dumps(settings), encoding="utf-8")
-    with pytest.raises(ConfigurationError, match="must remain true|deve permanecer true"):
+    with pytest.raises(ConfigurationError, match="deve permanecer true"):
         load_settings(path)
