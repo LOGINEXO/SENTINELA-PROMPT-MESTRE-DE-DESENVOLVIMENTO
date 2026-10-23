@@ -2,28 +2,38 @@
 
 Plataforma open source, local-first, de inteligência pública e auditoria defensiva. Cada instalação roda no próprio computador e mantém fila, banco SQLite, relatórios JSON e rascunhos localmente. Não há login, conta de usuário, servidor central ou sincronização de relatórios.
 
-## Requisitos
+## Plataformas suportadas e requisitos
+
+**Suporte oficial: Linux e Windows.** macOS não faz parte da matriz de suporte/testes atual.
 
 - Python 3.11+
-- Git e pip
+- PHP CLI 8.0+ para abrir a interface web local
+- Git para clonar o repositório
 
-## Instalação
+## Instalação rápida
 
-Linux/macOS:
+### Linux
 
-~~~bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-~~~
+Na raiz do repositório, execute:
 
-Windows PowerShell:
+```bash
+bash scripts/install-linux.sh
+bash scripts/start-linux.sh
+```
 
-~~~powershell
-py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-~~~
+### Windows (PowerShell)
+
+Instale Python 3.11+ e PHP CLI 8.0+ e deixe ambos disponíveis no PATH. Na raiz do repositório, execute:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\install-windows.ps1
+.\scripts\start-windows.ps1
+```
+
+Nos dois sistemas, abra `http://127.0.0.1:8080` no navegador e mantenha o terminal aberto durante o uso. Os scripts iniciam a interface local e o worker da fila. O instalador prepara o ambiente virtual e não instala Python ou PHP no sistema operacional.
+
+Detalhes: [guia de instalação](docs/installation.md).
 
 ## Verificação local
 
@@ -48,7 +58,7 @@ As consultas NVD só são feitas quando solicitadas explicitamente. A variável 
 
 **A auditoria não roda sem uma allowlist local preenchida manualmente.** Copie o arquivo de exemplo e adicione apenas hostnames para os quais você tem autorização documentada.
 
-Linux/macOS:
+Linux:
 
 ~~~bash
 cp config/authorized_targets.example.txt config/authorized_targets.txt
@@ -92,7 +102,7 @@ Detalhes: [docs/scope-controls.md](docs/scope-controls.md) e [docs/passive-audit
 
 ## Etapa 6 — Interface PHP
 
-A interface web fica em `web/index.php` e é **local-only**: não existe login, cadastro, hospedagem central nem armazenamento remoto de relatórios. No PowerShell, execute `$env:SENTINELA_LOCAL_MODE = "1"` e `php -S 127.0.0.1:8080 -t web`; abra `http://127.0.0.1:8080`. O servidor deve ficar ligado somente a `127.0.0.1`. Cada instalação mantém seu próprio banco SQLite, histórico, relatórios e rascunhos em `reports/` no computador do usuário. Não publique o painel na internet, não use proxy/túnel e não altere o bind para `0.0.0.0`. Configure `SENTINELA_PYTHON` se o PHP não localizar o interpretador correto.
+A interface web fica em `web/index.php` e é **local-only**: não existe login, cadastro, hospedagem central nem armazenamento remoto de relatórios. Use `bash scripts/install-linux.sh` e `bash scripts/start-linux.sh` no Linux ou `.\scripts\install-windows.ps1` e `.\scripts\start-windows.ps1` no Windows. Abra `http://127.0.0.1:8080`. Os inicializadores definem `SENTINELA_PYTHON` para o ambiente virtual e iniciam o worker da fila. O servidor fica ligado somente a `127.0.0.1`. Cada instalação mantém seu próprio banco SQLite, histórico, relatórios e rascunhos em `reports/` no computador do usuário. Não publique o painel na internet, não use proxy/túnel e não altere o bind para `0.0.0.0`.
 
 A interface enfileira consultas NVD, auditorias passivas e verificações ativas HTTPS limitadas com autorização separada, exibe histórico e controles PLAY/PAUSE/STOP e permite gerar rascunhos de e-mail. Consulte [docs/php-interface.md](docs/php-interface.md), [docs/queue-controls.md](docs/queue-controls.md), [docs/email-drafts.md](docs/email-drafts.md) e [docs/active-audit.md](docs/active-audit.md).
 
@@ -116,7 +126,8 @@ Os arquivos são gravados em `reports/` no computador onde o comando é executad
 - [x] 7 — Fila persistente e controles PLAY/PAUSE/STOP.
 - [x] 8 — Rascunhos de e-mail e revisão manual.
 - [x] 9 — Verificação ativa HTTPS limitada, com escopo de autorização separado.
-- [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço).
+- [x] 10 — Revisão de segurança para distribuição open source local (não hospedar o painel como serviço). 
+- [ ] 11 — Instalação e inicialização simplificadas para Linux e Windows; testes automatizados em ambos os sistemas (em validação).
 
 Inteligência pública não concede autorização para testar ativos. A verificação ativa implementada faz somente um GET HTTPS à raiz de hostname em allowlist ativa separada, sem seguir redirecionamentos; não há exploração nem varredura de portas. Não há envio automático de e-mails.
 
