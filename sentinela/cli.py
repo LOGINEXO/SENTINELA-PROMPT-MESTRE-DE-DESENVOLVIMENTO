@@ -25,6 +25,8 @@ def build_parser() -> argparse.ArgumentParser:
     intel.add_argument("--nvd-search", metavar="KEYWORD", help="consulta CVEs públicos na NVD por palavra-chave")
     intel.add_argument("--nvd-cve", metavar="CVE-ID", help="consulta um CVE específico na NVD")
     parser.add_argument("--limit", type=int, default=20, help="máximo de resultados NVD (1-100; padrão: 20)")
+    parser.add_argument("--modified-since", metavar="ISO-DATE", help="filtra CVEs modificados desde esta data ISO 8601 com fuso; use com --nvd-search")
+    parser.add_argument("--modified-until", metavar="ISO-DATE", help="fim opcional da janela incremental; use com --modified-since")
     return parser
 
 
@@ -39,10 +41,14 @@ def main(argv: list[str] | None = None) -> int:
         except ConfigurationError as exc:
             parser.error(str(exc))
         print(f"Configuração válida: {path}")
+    if (args.modified_since is not None or args.modified_until is not None) and args.nvd_search is None:
+        parser.error("--modified-since/--modified-until só podem ser usados com --nvd-search.")
     if args.nvd_search is not None or args.nvd_cve is not None:
         try:
             if args.nvd_search is not None:
-                records = search_cves(args.nvd_search, limit=args.limit)
+                records = search_cves(args.nvd_search, limit=args.limit,
+                                      modified_since=args.modified_since,
+                                      modified_until=args.modified_until)
             else:
                 if args.limit != 20:
                     parser.error("--limit só pode ser usado com --nvd-search; --nvd-cve retorna um registro.")

@@ -45,6 +45,7 @@ Busca por palavra-chave (consulta a API oficial; exige conectividade com a inter
 
 ~~~bash
 python -m sentinela.cli --nvd-search "OpenSSH" --limit 10
+python -m sentinela.cli --nvd-search "OpenSSH" --modified-since "2026-10-01T00:00:00Z"
 ~~~
 
 Consultar um CVE específico:
@@ -55,7 +56,7 @@ python -m sentinela.cli --nvd-cve CVE-2024-3094
 
 Opcionalmente, defina NVD_API_KEY no ambiente para autenticar as consultas e receber a cota aplicável à chave. Não coloque a chave em arquivos versionados. Sem chave, a NVD pode aplicar limites mais restritos. O cliente usa timeout, limita a consulta a 100 resultados, informa erros de rede/limite e não repete requisições automaticamente.
 
-Os resultados normalizados incluem CVE, descrição, datas, estado, CVSS quando disponível, produtos/intervalos afetados indicados pela NVD e referências. Um indicador público **não comprova** que um site específico seja vulnerável: asset_confirmed permanece false e validation_status é new_public_indicator.
+A busca incremental aceita --modified-since e --modified-until com datas ISO 8601 e fuso horário; a janela máxima é de 120 dias conforme as regras da NVD. Os resultados normalizados incluem CVE, descrição, datas, estado, CVSS quando disponível, faixa de prioridade técnica derivada do CVSS, produtos/intervalos afetados indicados pela NVD e referências. Um indicador público **não comprova** que um site específico seja vulnerável: asset_confirmed permanece false e validation_status é new_public_indicator.
 
 ## Estrutura
 

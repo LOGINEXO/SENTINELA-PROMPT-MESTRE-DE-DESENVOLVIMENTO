@@ -6,6 +6,7 @@ assets mentioned by CVE records or performs security tests against them.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta, timezone
 from math import isfinite
 import os
 import re
@@ -25,6 +26,7 @@ class NVDClientError(RuntimeError):
 
 
 def search_cves(keyword: str, *, limit: int = 20, api_key: str | None = None,
+                modified_since: str | None = None, modified_until: str | None = None,
                 timeout: float = DEFAULT_TIMEOUT_SECONDS) -> list[dict[str, Any]]:
     """Search NVD by keyword and return normalized, deduplicated CVEs."""
     keyword = keyword.strip() if isinstance(keyword, str) else ""
@@ -32,7 +34,36 @@ def search_cves(keyword: str, *, limit: int = 20, api_key: str | None = None,
         raise ValueError("A busca NVD exige uma palavra-chave não vazia.")
     if len(keyword) > 200:
         raise ValueError("A palavra-chave deve ter no máximo 200 caracteres.")
-    return _query({"keywordSearch": keyword}, limit=limit, api_key=api_key, timeout=timeout)
+    params = {"keywordSearch": keyword}
+    if modified_since is not None or modified_until is not None:
+        start, end = _validate_modified_window(modified_since, modified_until)
+        params["lastModStartDate"] = start
+        params["lastModEndDate"] = end
+    return _query(params, limit=limit, api_key=api_key, timeout=timeout)
+
+
+def _validate_modified_window(modified_since: str | None,
+                              modified_until: str | None) -> tuple[str, str]:
+    """Validate an NVD incremental window (maximum 120 days)."""
+    if modified_since is None:
+        raise ValueError("modified_since é obrigatório quando se usa modified_until.")
+    def parse(value: str) -> datetime:
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise ValueError("Datas devem estar em formato ISO 8601 com fuso horário.") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            raise ValueError("Datas devem incluir fuso horário, por exemplo Z.")
+        return parsed.astimezone(timezone.utc)
+    start = parse(modified_since)
+    end = parse(modified_until) if modified_until is not None else datetime.now(timezone.utc)
+    if start > end:
+        raise ValueError("modified_since não pode ser posterior a modified_until.")
+    if end - start > timedelta(days=120):
+        raise ValueError("A janela incremental NVD não pode exceder 120 dias.")
+    def format_nvd(value: datetime) -> str:
+        return value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return format_nvd(start), format_nvd(end)
 
 
 def get_cve(cve_id: str, *, api_key: str | None = None,
@@ -102,6 +133,7 @@ def normalize_cve(cve: dict[str, Any]) -> dict[str, Any] | None:
             description = next((d.get("value", "") for d in descriptions
                                 if isinstance(d, dict) and isinstance(d.get("value"), str)), "")
     metrics = cve.get("metrics") if isinstance(cve.get("metrics"), dict) else {}
+    cvss = _extract_cvss(metrics)
     return {
         "cve_id": cve_id.upper(),
         "source": "NVD",
@@ -109,13 +141,34 @@ def normalize_cve(cve: dict[str, Any]) -> dict[str, Any] | None:
         "last_modified": cve.get("lastModified"),
         "status": cve.get("vulnStatus"),
         "description": description,
-        "cvss": _extract_cvss(metrics),
+        "cvss": cvss,
+        "technical_priority": _technical_priority(cvss),
         "affected_products": _extract_products(cve.get("configurations")),
         "references": _extract_references(cve.get("references")),
         "nvd_url": f"https://nvd.nist.gov/vuln/detail/{cve_id.upper()}",
         "validation_status": "new_public_indicator",
         "asset_confirmed": False,
     }
+
+
+def _technical_priority(cvss: dict[str, Any] | None) -> str:
+    """Map CVSS to a technical triage band, not organization-specific risk."""
+    if not cvss:
+        return "unknown"
+    severity = str(cvss.get("severity") or "").upper()
+    if severity in {"CRITICAL", "HIGH", "MEDIUM", "LOW"}:
+        return severity.lower()
+    score = cvss.get("base_score")
+    if isinstance(score, (int, float)) and not isinstance(score, bool):
+        if score >= 9:
+            return "critical"
+        if score >= 7:
+            return "high"
+        if score >= 4:
+            return "medium"
+        if score > 0:
+            return "low"
+    return "unknown"
 
 
 def _extract_cvss(metrics: dict[str, Any]) -> dict[str, Any] | None:

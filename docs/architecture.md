@@ -23,9 +23,9 @@ Esses módulos não são considerados implementados apenas por estarem descritos
 
 ## Inteligência pública e interpretação
 
-A API NVD é a fonte de dados desta etapa. As consultas são iniciadas explicitamente pelo usuário via CLI; não há polling em segundo plano. A chave NVD_API_KEY é opcional e deve ser fornecida pelo ambiente, nunca pelo código versionado. O cliente aplica timeout, limite de até 100 resultados por consulta, deduplicação por CVE ID e mensagens de erro específicas.
+A API NVD é a fonte de dados desta etapa. As consultas são iniciadas explicitamente pelo usuário via CLI; não há polling em segundo plano. A chave NVD_API_KEY é opcional e deve ser fornecida pelo ambiente, nunca pelo código versionado. O cliente aplica timeout, limite de até 100 resultados por consulta, deduplicação por CVE ID e mensagens de erro específicas. A busca aceita uma janela incremental por data de última modificação, limitada a 120 dias e validada antes da chamada.
 
-Os registros normalizados incluem identificador, fonte, datas, estado, descrição, CVSS quando disponível, critérios/produtos afetados, intervalos de versão e referências. Todo registro começa como new_public_indicator, com asset_confirmed: false. A existência de um CVE não significa que um domínio específico esteja vulnerável.
+Os registros normalizados incluem identificador, fonte, datas, estado, descrição, CVSS quando disponível, faixa de prioridade técnica derivada do CVSS, critérios/produtos afetados, intervalos de versão e referências. Todo registro começa como new_public_indicator, com asset_confirmed: false. A existência de um CVE não significa que um domínio específico esteja vulnerável.
 
 ## Separação de responsabilidades
 

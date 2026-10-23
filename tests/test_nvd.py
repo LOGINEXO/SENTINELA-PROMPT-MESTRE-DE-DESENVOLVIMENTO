@@ -88,6 +88,32 @@ class NVDTests(unittest.TestCase):
         mock_urlopen.return_value = FakeResponse(b"{}")
         with self.assertRaisesRegex(NVDClientError, "vulnerabilities"): search_cves("test")
 
+    @patch("sentinela.intelligence.nvd.urlopen")
+    def test_incremental_window_is_sent_to_nvd(self, mock_urlopen):
+        mock_urlopen.return_value = FakeResponse(json.dumps(api_response([])).encode())
+        search_cves("test", modified_since="2026-10-01T00:00:00Z",
+                    modified_until="2026-10-02T00:00:00Z")
+        url = mock_urlopen.call_args.args[0].full_url
+        self.assertIn("lastModStartDate=", url)
+        self.assertIn("lastModEndDate=", url)
+
+    def test_incremental_window_rejects_invalid_ranges(self):
+        with self.assertRaises(ValueError):
+            search_cves("test", modified_until="2026-10-02T00:00:00Z")
+        with self.assertRaises(ValueError):
+            search_cves("test", modified_since="2026-10-02T00:00:00Z",
+                        modified_until="2026-10-01T00:00:00Z")
+        with self.assertRaises(ValueError):
+            search_cves("test", modified_since="2026-01-01T00:00:00Z",
+                        modified_until="2026-10-01T00:00:00Z")
+        with self.assertRaises(ValueError):
+            search_cves("test", modified_since="2026-10-01T00:00:00")
+
+    def test_technical_priority_uses_cvss_and_does_not_claim_asset_confirmation(self):
+        result = normalize_cve(sample_cve())
+        self.assertEqual(result["technical_priority"], "high")
+        self.assertFalse(result["asset_confirmed"])
+
     def test_rejects_non_finite_timeout(self):
         with self.assertRaises(ValueError): search_cves("test", timeout=float("nan"))
         with self.assertRaises(ValueError): search_cves("test", timeout=float("inf"))
