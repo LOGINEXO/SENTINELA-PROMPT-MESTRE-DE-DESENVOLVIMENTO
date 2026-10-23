@@ -78,7 +78,7 @@ def test_audit_reports_tls_and_security_headers_without_following_redirects(monk
             return False
 
     monkeypatch.setattr(passive, "_PinnedHTTPSConnection", FakeConnection)
-    result = audit_https("https://example.com")
+    result = audit_https("https://example.com", allowed_hosts={"example.com"})
     assert result["http_status"] == 302
     assert result["redirect_followed"] is False
     assert result["tls"]["verified"] is True
@@ -91,7 +91,14 @@ def test_audit_rejects_invalid_timeout_before_network(monkeypatch):
     monkeypatch.setattr(passive, "_resolve_public_addresses",
                         lambda _host: pytest.fail("DNS não deveria ser consultado"))
     with pytest.raises(PassiveAuditError, match="timeout"):
-        audit_https("example.com", timeout=100)
+        audit_https("example.com", allowed_hosts={"example.com"}, timeout=100)
+
+
+def test_audit_rejects_target_outside_allowlist_before_dns(monkeypatch):
+    monkeypatch.setattr(passive, "_resolve_public_addresses",
+                        lambda _host: pytest.fail("DNS não deveria ser consultado"))
+    with pytest.raises(PassiveAuditError, match="fora do escopo"):
+        audit_https("other.example", allowed_hosts={"example.com"})
 
 
 def test_tls_verification_error_is_reported_safely(monkeypatch):
@@ -104,4 +111,4 @@ def test_tls_verification_error_is_reported_safely(monkeypatch):
 
     monkeypatch.setattr(passive, "_PinnedHTTPSConnection", FailedConnection)
     with pytest.raises(PassiveAuditError, match="certificado TLS falhou"):
-        audit_https("example.com")
+        audit_https("example.com", allowed_hosts={"example.com"})

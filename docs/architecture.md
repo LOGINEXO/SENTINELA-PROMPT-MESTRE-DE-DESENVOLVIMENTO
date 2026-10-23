@@ -1,40 +1,36 @@
 # Arquitetura do Sentinela
 
-## Etapa atual: Inteligência pública (Etapa 2 concluída e validada)
+## Estado das etapas
 
-A Etapa 1 estabeleceu a estrutura do repositório, o pacote Python, CLI, configuração local, documentação, testes básicos e CI. O GitHub Actions confirmou sucesso para a fundação.
+- Etapa 1 — Fundação: concluída.
+- Etapa 2 — Inteligência pública NVD/CVE: concluída.
+- Etapa 3 — Relatórios JSON sanitizados: concluída.
+- Etapa 4 — Auditoria passiva HTTPS/TLS: concluída.
+- Etapa 5 — Escopo explícito e proteção de destinos: implementada nesta branch, aguardando validação do CI.
+- Etapas 6–10: planejadas, não implementadas.
 
-A Etapa 2 acrescenta um cliente explícito para a API NVD CVE 2.0, normalização de resultados, tratamento de falhas HTTP/rede/JSON e testes simulados. O cliente consulta somente a API pública da NVD. Ele não acessa domínios descritos nos registros e não executa testes em ativos.
+## Etapa 5 — Escopo e controles de destino
 
-## Módulos planejados por etapa
+A auditoria passiva exige uma lista local explícita em `config/authorized_targets.txt`. Esse arquivo não é versionado; o exemplo versionado contém apenas comentários e não autoriza nenhum ativo. Cada entrada precisa ser um hostname DNS exato. Curingas, endereços IP literais, portas alternativas e caminhos são rejeitados. Subdomínios não são incluídos implicitamente.
 
-- Etapa 1 — Fundação: concluída e validada.
-- Etapa 2 — Inteligência pública: concluída e validada no GitHub Actions (35 testes aprovados).
-- Etapa 3 — Relatórios locais: formato comum, sanitização e exportação.
-- Etapa 4 — Auditoria passiva: verificações HTTPS, TLS e cabeçalhos em ativos autorizados.
-- Etapa 5 — Controle de escopo: validação de destinos, SSRF, DNS rebinding e redirecionamentos.
-- Etapa 6 — Interface PHP: painel e integração segura com o motor Python.
-- Etapa 7 — Execução: fila controlada e estados PLAY/PAUSE/STOP.
-- Etapa 8 — E-mails: rascunhos revisáveis e provedores configuráveis.
-- Etapa 9 — Testes ativos: somente verificações não destrutivas em ambientes autorizados.
-- Etapa 10 — Publicação: revisão de segurança e preparação para distribuição.
+A execução falha fechada se a lista estiver ausente ou vazia. Antes de iniciar a conexão, o hostname solicitado é comparado à allowlist. Todas as respostas DNS precisam ser endereços públicos; se uma única resposta for privada, loopback, link-local ou não global, a operação é bloqueada. O cliente conecta diretamente ao IP público validado, usando o hostname original para SNI e validação do certificado TLS. Assim, uma alteração posterior da resposta DNS não muda o endereço da conexão já selecionado.
 
-Esses módulos não são considerados implementados apenas por estarem descritos nesta arquitetura.
+A função `validate_redirect` valida destinos de cabeçalhos `Location` para uso futuro: somente HTTPS/443, hostname exato no escopo e resolução pública. Ela não envia requisições. A auditoria atual não segue redirecionamentos.
 
-## Inteligência pública e interpretação
+Esses controles mitigam caminhos comuns de SSRF e DNS rebinding, mas não substituem autorização documentada, egress filtering, isolamento de rede ou revisão de segurança.
 
-A API NVD é a fonte de dados desta etapa. As consultas são iniciadas explicitamente pelo usuário via CLI; não há polling em segundo plano. A chave NVD_API_KEY é opcional e deve ser fornecida pelo ambiente, nunca pelo código versionado. O cliente aplica timeout, limite de até 100 resultados por consulta, deduplicação por CVE ID e mensagens de erro específicas. A busca aceita uma janela incremental por data de última modificação, limitada a 120 dias e validada antes da chamada.
+## Etapas anteriores
 
-Os registros normalizados incluem identificador, fonte, datas, estado, descrição, CVSS quando disponível, faixa de prioridade técnica derivada do CVSS, critérios/produtos afetados, intervalos de versão e referências. Todo registro começa como new_public_indicator, com asset_confirmed: false. A existência de um CVE não significa que um domínio específico esteja vulnerável.
+A Etapa 2 consulta explicitamente a API NVD CVE 2.0, normaliza os resultados e classifica prioridade técnica. Um CVE público não comprova que um ativo esteja vulnerável.
+
+A Etapa 3 cria relatórios com envelope comum e exportação JSON sanitizada. Relatórios locais devem permanecer fora da raiz pública do servidor e ser revisados antes de compartilhamento.
+
+A Etapa 4 faz uma única requisição `HEAD` HTTPS na porta 443, verifica TLS e registra cabeçalhos. Não há exploração, varredura de portas nem acompanhamento automático de redirecionamentos.
 
 ## Separação de responsabilidades
 
-A inteligência pública, a auditoria autorizada, a validação, os relatórios e a execução serão componentes separados. A descoberta de uma vulnerabilidade pública nunca autoriza automaticamente testar os domínios potencialmente afetados.
+Inteligência pública, auditoria passiva, escopo, relatórios e futuras funções ativas são componentes separados. A presença de um ativo em dados públicos nunca concede autorização para testá-lo.
 
-## Configuração e dados
+## Dados privados
 
-Os exemplos não contêm credenciais. Configurações privadas, listas reais de autorização, bancos locais e relatórios devem permanecer fora do controle de versão. Relatórios devem ficar fora da raiz pública do servidor web.
-
-## Dependências
-
-A fundação e o cliente NVD usam a biblioteca padrão do Python. pytest é dependência de desenvolvimento/teste. Não foi adicionada dependência de runtime para esta etapa.
+Configurações locais, escopo real, credenciais e relatórios não devem ser versionados nem armazenados na raiz pública de um servidor web. O arquivo real `config/authorized_targets.txt` está no `.gitignore`.
