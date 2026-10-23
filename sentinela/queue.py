@@ -102,9 +102,9 @@ def get_mode() -> str:
 
 
 def set_mode(mode: str) -> dict[str, Any]:
-    if mode not in VALID_MODES:
-        raise QueueError("Controle inválido; use play, pause ou stop.")
     normalized = {"play": "running", "pause": "paused", "stop": "stopped"}.get(mode, mode)
+    if normalized not in VALID_MODES:
+        raise QueueError("Controle inválido; use play, pause ou stop.")
     with connect() as db:
         db.execute("BEGIN IMMEDIATE")
         db.execute("INSERT INTO queue_state(key,value) VALUES('mode',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (normalized,))
