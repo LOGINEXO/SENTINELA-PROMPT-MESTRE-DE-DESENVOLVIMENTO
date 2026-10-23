@@ -1,40 +1,37 @@
-# Etapa 6 — Interface PHP
+# Interface local do Sentinela
 
-A interface em `web/index.php` oferece consulta pública NVD/CVE e auditoria passiva HTTPS de hostname previamente autorizado, enfileirando tarefas em SQLite. O painel exibe o estado, o histórico e os controles PLAY/PAUSE/STOP. Para tarefas concluídas, é possível gerar um rascunho de e-mail local, que não é enviado automaticamente. O processo worker deve ser iniciado separadamente conforme `docs/queue-controls.md`.
+A interface PHP é uma interface gráfica para a instalação local do Sentinela. **Não é um serviço hospedado nem uma aplicação multiusuário.** Não há cadastro, login, contas ou armazenamento central.
 
-## Uso local simples
+## Iniciar no computador do usuário
 
-O projeto é código aberto e pode ser executado localmente sem criar conta nem senha. No PowerShell, na raiz do repositório:
+Requisitos: PHP 8+ recomendado, Python 3.11+ e dependências instaladas. Na raiz do repositório, abra PowerShell:
 
 ```powershell
 $env:SENTINELA_LOCAL_MODE = "1"
 php -S 127.0.0.1:8080 -t web
 ```
 
-Abra `http://127.0.0.1:8080`. O modo sem autenticação só funciona quando a conexão vem de loopback (`127.0.0.1` ou `::1`) e não há cabeçalhos de proxy encaminhado. Não mude o endereço do servidor para `0.0.0.0` e não use esse modo em hospedagem, container exposto, túnel ou reverse proxy.
+Abra `http://127.0.0.1:8080`. Não precisa configurar usuário nem senha. Mantenha o servidor ligado a `127.0.0.1`; não use `0.0.0.0`, proxy reverso, túnel ou hospedagem pública. A aplicação rejeita pedidos que não venham de loopback ou que contenham cabeçalhos de proxy encaminhado.
 
-## Acesso remoto / hospedagem
+## Onde os dados ficam
 
-Para acesso por rede ou hospedagem, **não** defina `SENTINELA_LOCAL_MODE=1`. Configure `SENTINELA_WEB_USERNAME` e `SENTINELA_WEB_PASSWORD` no ambiente do processo PHP. A senha deve ter pelo menos 16 caracteres e ser exclusiva. O painel responde HTTP 503 se as credenciais não estiverem configuradas e HTTP 401 para credenciais ausentes/incorretas. Acesso remoto exige HTTPS/TLS; restrinja também por VPN/firewall quando possível.
+- Banco SQLite da fila e histórico: `reports/queue.sqlite3` por padrão.
+- Relatórios JSON: diretório `reports/` ou caminho local informado pelo comando de exportação.
+- Rascunhos de e-mail: `reports/email-drafts/`.
+- Listas de escopo: arquivos locais `config/authorized_targets.txt` e `config/authorized_active_targets.txt`, que não devem ser versionados.
 
-O arquivo `.env.example` é apenas documentação e **não é carregado automaticamente** pelo PHP. Em instalações PHP-FPM/FastCGI, confirme que as variáveis chegam ao processo e que `PHP_AUTH_USER` / `PHP_AUTH_PW` são disponibilizados pelo servidor.
+Esses arquivos ficam no computador em que o Sentinela é executado. Cada instalação possui banco, histórico e relatórios próprios. O projeto não envia relatórios para servidor central nem sincroniza dados entre computadores. Se o usuário mover o repositório, copiar os arquivos locais ou configurar manualmente outro caminho, isso é uma ação local do usuário.
 
-## Requisitos
+## Tráfego de rede esperado
 
-- PHP 8.0+ recomendado, com sessões, `proc_open` e suporte a HTTP Basic Auth para hospedagem protegida.
-- Python 3.11+ e dependências do projeto instaladas.
-- Arquivo local `config/authorized_targets.txt` preenchido com hostnames autorizados. O arquivo não deve ser versionado.
-- Servidor web configurado para servir **somente** o diretório `web/`; a raiz do repositório deve ficar fora do document root público.
+A busca NVD consulta a API pública da NVD para obter informações de vulnerabilidades. As auditorias conectam-se aos hostnames que o usuário incluiu nas allowlists locais e para os quais tem autorização. Isso é tráfego de consulta/auditoria, não upload do relatório para um serviço do Sentinela.
 
-## Controles implementados
+## Proteções
 
-- Modo local opcional sem senha, limitado a conexão loopback sem cabeçalhos de proxy.
-- HTTP Basic Auth obrigatório para modo de hospedagem, com falha fechada quando as variáveis estão ausentes ou a senha é curta.
-- Token CSRF de sessão verificado em cada POST.
-- Escape de conteúdo dinâmico HTML e cabeçalhos básicos de segurança.
-- Validação de tamanho/formato para entradas e limite NVD entre 1 e 100.
-- Verificação prévia de hostname na allowlist local; o núcleo Python repete validação e verificações DNS/IP.
-- Saída do processo limitada e exibida como texto escapado, não como HTML.
-- `web/.htaccess` desativa listagem de diretórios em Apache.
+- A interface só aceita conexões de loopback e rejeita cabeçalhos de proxy encaminhado.
+- Formulários POST verificam token CSRF.
+- Entradas são validadas e saídas HTML são escapadas.
+- Auditorias respeitam allowlists locais separadas para escopo passivo e ativo.
+- Rascunhos de e-mail são criados localmente e nunca enviados automaticamente.
 
-A autenticação da aplicação não substitui os controles de acesso da infraestrutura. Os rascunhos ficam em `reports/email-drafts/`; revise manualmente destinatários e conteúdo. Não mantenha relatórios, escopo real, segredos ou a raiz do repositório sob o document root público.
+Não exponha o servidor local na rede. A proteção local não substitui autorização documentada para auditar ativos.
